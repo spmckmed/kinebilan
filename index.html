@@ -789,7 +789,7 @@ async function genererCR(bilanNum) {
   const contextPatient = p ? `Patient : ${p.prenom} ${p.nom}, ${p.age} ans. Motif : ${p.motif}. Date évaluation : ${p.dateEval}.` : '';
 
   try {
-    const response = await fetch('/.netlify/functions/claude-proxy', {
+    const response = await fetch('https://kinebilan-proxyp.sp-mck-kine.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
