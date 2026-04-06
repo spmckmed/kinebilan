@@ -1097,253 +1097,102 @@ function updateStepper(p) {
 // EXPORT PDF
 // ============================================================
 function exportPDF() {
-  const p = getPatient();
+  var p = getPatient();
   if (!p) return;
 
-  const esc = (str) => (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  function esc(str) { return (str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
-  const headerRow = (label, value) => value
-    ? \`<div class="hrow"><span class="hlabel">\${esc(label)}</span><span class="hvalue">\${esc(value)}</span></div>\`
-    : '';
-
-  // Construire le bloc en-tête patient
-  const patientHeader = \`
-    <div class="patient-header">
-      <div class="patient-header-title">COMPTE RENDU DE BILAN KINÉSITHÉRAPIQUE VESTIBULAIRE</div>
-      <div class="patient-header-grid">
-        \${headerRow('Patient', (p.prenom || '') + ' ' + (p.nom || ''))}
-        \${headerRow('Âge', p.age ? p.age + ' ans' : '')}
-        \${p.profession ? headerRow('Profession', p.profession) : ''}
-        \${p.loisirs ? headerRow('Loisirs', p.loisirs) : ''}
-        \${headerRow("Date d'évaluation", p.dateEval)}
-        \${p.prescripteur ? headerRow('Prescripteur', p.prescripteur + (p.datePrescription ? ' — ordonnance du ' + p.datePrescription : '')) : ''}
-        \${p.mt ? headerRow('Médecin traitant', p.mt) : ''}
-        \${p.motif ? headerRow('Motif', p.motif) : ''}
-      </div>
-    </div>
-  \`;
-
-  // Section numérotée
-  let sectionNum = 0;
-  const section = (title, content) => {
-    sectionNum++;
-    return \`
-      <div class="section">
-        <div class="section-header">
-          <span class="section-num">\${sectionNum}</span>
-          <span class="section-title">\${title}</span>
-        </div>
-        <div class="section-rule"></div>
-        <div class="section-content">\${content}</div>
-      </div>
-    \`;
-  };
-
-  // Image sur sa propre page
-  const imgPage = (label, src) => src ? \`
-    <div class="img-page">
-      <div class="img-label">\${label}</div>
-      <img src="\${src}" class="capture-img"/>
-    </div>
-  \` : '';
-
-  const sectionsHtml = [
-    p.b1CR ? section('BILAN CLINIQUE', p.b1CR) : '',
-    p.b2CR ? section('EXAMEN VIA RÉALITÉ VIRTUELLE', p.b2CR) : '',
-    (p.captureVVS || p.captureHCTSIB) ? section('EXAMENS GRAPHIQUES',
-      imgPage('Verticale Visuelle Subjective (VVS)', p.captureVVS) +
-      imgPage('HCTSIB / Posturographie', p.captureHCTSIB)
-    ) : ''
-  ].filter(Boolean).join('');
-
-  const html = \`<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="utf-8"/>
-<title>CR_\${esc(p.nom)}_\${esc(p.prenom)}_\${esc(p.dateEval || 'bilan')}</title>
-<style>
-  @page {
-    size: A4;
-    margin: 18mm 18mm 28mm 18mm;
-    @bottom-center {
-      content: "";
-    }
+  function hrow(label, value) {
+    if (!value) return "";
+    return "<tr><td style='font-weight:700;padding:3px 14px 3px 0;color:#126477;white-space:nowrap;font-size:10pt'>"
+      + esc(label) + "</td><td style='padding:3px 0;color:#222;font-size:10pt'>" + esc(value) + "</td></tr>";
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: Arial, sans-serif;
-    font-size: 10.5pt;
-    color: #1a1a1a;
-    line-height: 1.55;
+  function section(num, title, body) {
+    return "<div style='margin-bottom:28px'>"
+      + "<div style='display:flex;align-items:center;gap:10px;margin-bottom:6px'>"
+      + "<span style='display:flex;align-items:center;justify-content:center;width:24px;height:24px;min-width:24px;background:#126477;color:white;font-weight:700;font-size:11pt;border-radius:50%;'>" + num + "</span>"
+      + "<span style='font-size:12pt;font-weight:700;color:#126477;text-transform:uppercase;letter-spacing:0.3px'>" + title + "</span>"
+      + "</div>"
+      + "<div style='height:2px;background:linear-gradient(to right,#126477,#e0eef1);margin-bottom:10px;border-radius:1px'></div>"
+      + "<div style='font-size:10.5pt;line-height:1.65;color:#222'>" + body + "</div>"
+      + "</div>";
   }
 
-  /* ---- EN-TÊTE PATIENT ---- */
-  .patient-header {
-    border: 1.5px solid #126477;
-    border-radius: 6px;
-    padding: 14px 18px 10px;
-    margin-bottom: 22px;
-    background: #f7fcfd;
-  }
-  .patient-header-title {
-    font-size: 12pt;
-    font-weight: 700;
-    color: #126477;
-    text-align: center;
-    margin-bottom: 12px;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
-  }
-  .patient-header-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3px 24px;
-  }
-  .hrow { display: flex; gap: 6px; font-size: 10pt; }
-  .hlabel { font-weight: 700; color: #126477; white-space: nowrap; min-width: 120px; }
-  .hvalue { color: #222; }
+  var sectionNum = 0;
+  function nextSection(title, body) { sectionNum++; return section(sectionNum, title, body); }
 
-  /* ---- SECTIONS ---- */
-  .section { margin-bottom: 24px; page-break-inside: avoid; }
-  .section-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 6px;
-  }
-  .section-num {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    min-width: 24px;
-    background: #126477;
-    color: white;
-    font-weight: 700;
-    font-size: 11pt;
-    border-radius: 50%;
-  }
-  .section-title {
-    font-size: 12pt;
-    font-weight: 700;
-    color: #126477;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-  }
-  .section-rule {
-    height: 2px;
-    background: linear-gradient(to right, #126477, #e0eef1);
-    margin-bottom: 10px;
-    border-radius: 1px;
-  }
-  .section-content {
-    font-size: 10.5pt;
-    line-height: 1.65;
-    color: #222;
-  }
-  .section-content h1, .section-content h2, .section-content h3 {
-    font-size: 11pt;
-    color: #126477;
-    margin: 12px 0 4px;
-  }
-  .section-content ul, .section-content ol { padding-left: 20px; margin: 4px 0; }
-  .section-content p { margin-bottom: 6px; }
-  .section-content strong { color: #126477; }
+  var patientName = ((p.prenom||"") + " " + (p.nom||"")).trim();
+  var prescInfo = p.prescripteur ? (p.prescripteur + (p.datePrescription ? " — ordonnance du " + p.datePrescription : "")) : "";
 
-  /* ---- CAPTURES ---- */
-  .img-page {
-    page-break-before: always;
-    text-align: center;
-    padding-top: 10px;
+  var headerBlock = "<div style='border:1.5px solid #126477;border-radius:6px;padding:16px 20px 12px;margin-bottom:24px;background:#f7fcfd'>"
+    + "<div style='font-size:12pt;font-weight:700;color:#126477;text-align:center;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.3px'>COMPTE RENDU DE BILAN KINÉSITHÉRAPIQUE VESTIBULAIRE</div>"
+    + "<table style='border-collapse:collapse;width:100%'>"
+    + hrow("Patient", patientName)
+    + hrow("Âge", p.age ? p.age + " ans" : "")
+    + hrow("Profession", p.profession)
+    + hrow("Loisirs", p.loisirs)
+    + hrow("Date d'évaluation", p.dateEval)
+    + hrow("Prescripteur", prescInfo)
+    + hrow("Médecin traitant", p.mt)
+    + hrow("Motif", p.motif)
+    + "</table></div>";
+
+  var sectionsHtml = "";
+  if (p.b1CR) sectionsHtml += nextSection("BILAN CLINIQUE", p.b1CR);
+  if (p.b2CR) sectionsHtml += nextSection("EXAMEN VIA RÉALITÉ VIRTUELLE", p.b2CR);
+
+  var imagesHtml = "";
+  if (p.captureVVS) {
+    imagesHtml += "<div style='page-break-before:always;text-align:center;padding-top:10px'>"
+      + "<div style='font-weight:700;font-size:11pt;color:#126477;margin-bottom:16px;text-transform:uppercase'>Verticale Visuelle Subjective (VVS)</div>"
+      + "<img src='" + p.captureVVS + "' style='max-width:100%;max-height:180mm;border:1px solid #cde4ea;border-radius:6px'/>"
+      + "</div>";
   }
-  .img-label {
-    font-weight: 700;
-    font-size: 11pt;
-    color: #126477;
-    margin-bottom: 16px;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
+  if (p.captureHCTSIB) {
+    imagesHtml += "<div style='page-break-before:always;text-align:center;padding-top:10px'>"
+      + "<div style='font-weight:700;font-size:11pt;color:#126477;margin-bottom:16px;text-transform:uppercase'>HCTSIB / Posturographie</div>"
+      + "<img src='" + p.captureHCTSIB + "' style='max-width:100%;max-height:180mm;border:1px solid #cde4ea;border-radius:6px'/>"
+      + "</div>";
   }
-  .capture-img {
-    max-width: 100%;
-    max-height: 200mm;
-    border: 1px solid #cde4ea;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(18,100,119,0.08);
-  }
+  if (imagesHtml) sectionsHtml += nextSection("EXAMENS GRAPHIQUES", imagesHtml);
 
-  /* ---- PIED DE PAGE ---- */
-  .footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 22mm;
-    border-top: 1.5px solid #126477;
-    padding-top: 5px;
-    text-align: center;
-    font-size: 8.5pt;
-    color: #4a6a72;
-    background: white;
-  }
-  .footer-name {
-    font-weight: 700;
-    font-size: 9.5pt;
-    color: #126477;
-    margin-bottom: 2px;
-  }
-  .footer-coords { font-size: 8.5pt; color: #5a7a82; }
+  var footer = "<div style='position:fixed;bottom:0;left:0;right:0;border-top:1.5px solid #126477;padding:6px 18mm 6px;text-align:center;background:white;font-family:Arial,sans-serif'>"
+    + "<div style='font-weight:700;font-size:9.5pt;color:#126477'>MACKAY Sébastien</div>"
+    + "<div style='font-size:8.5pt;color:#5a7a82'>Masseur Kinésithérapeute D.E. &nbsp;|&nbsp; Cabinet de rééducation vestibulaire &nbsp;|&nbsp; DIU vertiges et rééducation vestibulaire PARIS VI<br>"
+    + "Pôle Santé Argouges — 42 rue de Beauvais, 14400 BAYEUX &nbsp;|&nbsp; 06.11.77.70.76 &nbsp;|&nbsp; sp.mck.kine@gmail.com</div>"
+    + "</div>";
 
-  .page-num {
-    position: fixed;
-    bottom: 4mm;
-    right: 18mm;
-    font-size: 8pt;
-    color: #8aacb4;
-  }
+  var css = "@page{size:A4;margin:18mm 18mm 28mm 18mm}"
+    + "*{box-sizing:border-box;margin:0;padding:0}"
+    + "body{font-family:Arial,sans-serif;font-size:10.5pt;color:#1a1a1a;line-height:1.55}"
+    + "h1,h2,h3{font-size:11pt;color:#126477;margin:12px 0 4px}"
+    + "ul,ol{padding-left:20px;margin:4px 0}"
+    + "p{margin-bottom:6px}"
+    + "strong{color:#126477}"
+    + "@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}";
 
-  @media print {
-    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .img-page:first-child { page-break-before: avoid; }
-  }
-</style>
-</head>
-<body>
+  var html = "<!DOCTYPE html><html lang='fr'><head><meta charset='utf-8'/>"
+    + "<title>CR_" + esc(p.nom) + "_" + esc(p.prenom) + "_" + esc(p.dateEval||"bilan") + "</title>"
+    + "<style>" + css + "</style>"
+    + "</head><body>"
+    + headerBlock
+    + sectionsHtml
+    + footer
+    + "</body></html>";
 
-\${patientHeader}
-\${sectionsHtml}
-
-<div class="footer">
-  <div class="footer-name">MACKAY Sébastien</div>
-  <div class="footer-coords">
-    Masseur Kinésithérapeute D.E. &nbsp;|&nbsp; Cabinet de rééducation vestibulaire &nbsp;|&nbsp; DIU vertiges et rééducation vestibulaire PARIS VI<br>
-    Pôle Santé Argouges — 42 rue de Beauvais, 14400 BAYEUX &nbsp;|&nbsp; 06.11.77.70.76 &nbsp;|&nbsp; sp.mck.kine@gmail.com
-  </div>
-</div>
-<div class="page-num">
-  <span id="pageNum"></span>
-</div>
-
-
-</body>
-</html>\`;
-
-  const win = window.open('', '_blank');
+  var win = window.open("", "_blank");
   win.document.write(html);
   win.document.close();
-  win.onload = () => { win.focus(); win.print(); };
+  win.onload = function() { win.focus(); win.print(); };
 
-  p.statut = 'exporte';
-  p.lastMod = new Date().toLocaleString('fr-FR');
+  p.statut = "exporte";
+  p.lastMod = new Date().toLocaleString("fr-FR");
   savePatients();
   renderDashboard();
   updateStepper(p);
-  showToast('PDF généré', 'picture_as_pdf');
-}
-// ============================================================
+  showToast("PDF généré", "picture_as_pdf");
+}// ============================================================
 // UTILS
 // ============================================================
 function markdownToHtml(md) {
