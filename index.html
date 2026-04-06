@@ -81,40 +81,100 @@ tailwind.config = {
 </head>
 <body class="bg-surface text-on-surface min-h-screen">
 
-<!-- PASSWORD GATE -->
-<div id="passwordGate" style="position:fixed;inset:0;z-index:9999;background:#faf9f6;display:flex;align-items:center;justify-content:center;">
+<!-- MAGIC LINK GATE -->
+<div id="authGate" style="position:fixed;inset:0;z-index:9999;background:#faf9f6;display:flex;align-items:center;justify-content:center;">
   <div style="background:white;border-radius:12px;padding:40px;width:360px;box-shadow:0 12px 32px -4px rgba(44,62,80,0.12);text-align:center;">
     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#126477" stroke-width="1.5" style="margin-bottom:16px"><path d="M12 2C8.13 2 5 5.13 5 9v2H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2v-9a2 2 0 00-2-2h-1V9c0-3.87-3.13-7-7-7zm0 2c2.76 0 5 2.24 5 5v2H7V9c0-2.76 2.24-5 5-5zm0 10a2 2 0 110 4 2 2 0 010-4z"/></svg>
     <h2 style="font-family:Newsreader,serif;font-size:22px;color:#1a1c1a;margin:0 0 6px">PhysioLab</h2>
     <p style="font-size:13px;color:#3f484b;margin:0 0 24px">Gestion des bilans kinésithérapiques</p>
-    <input id="pwdInput" type="password" placeholder="Mot de passe" 
-      style="width:100%;padding:12px 16px;border:1px solid #e3e2df;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:12px;font-family:Public Sans,sans-serif"
-      onkeydown="if(event.key==='Enter')checkPwd()"
-    />
-    <button onclick="checkPwd()" 
-      style="width:100%;padding:12px;background:linear-gradient(135deg,#126477,#357d91);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:Public Sans,sans-serif">
-      Accéder
-    </button>
-    <p id="pwdError" style="color:#ba1a1a;font-size:12px;margin:10px 0 0;display:none">Mot de passe incorrect</p>
-    <p style="margin:16px 0 0;font-size:11px;color:#6f797c">Première connexion ? Mot de passe par défaut : <strong>physio2026</strong></p>
+
+    <!-- Étape 1 : saisie email -->
+    <div id="authStep1">
+      <input id="emailInput" type="email" placeholder="Votre adresse email"
+        style="width:100%;padding:12px 16px;border:1px solid #e3e2df;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:12px;font-family:Public Sans,sans-serif"
+        onkeydown="if(event.key==='Enter')sendMagicLink()"
+      />
+      <button onclick="sendMagicLink()"
+        style="width:100%;padding:12px;background:linear-gradient(135deg,#126477,#357d91);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:Public Sans,sans-serif">
+        Recevoir le lien de connexion
+      </button>
+      <p id="authError" style="color:#ba1a1a;font-size:12px;margin:10px 0 0;display:none"></p>
+    </div>
+
+    <!-- Étape 2 : confirmation envoi -->
+    <div id="authStep2" style="display:none">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#126477" stroke-width="1.5" style="margin-bottom:16px"><path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm0 2l-8 5-8-5"/></svg>
+      <p style="font-size:15px;color:#1a1c1a;font-weight:600;margin:0 0 8px">Vérifiez votre boîte mail</p>
+      <p style="font-size:13px;color:#3f484b;margin:0">Un lien de connexion a été envoyé à <strong id="authEmailSent"></strong>. Il est valable 15 minutes.</p>
+    </div>
   </div>
 </div>
 <script>
 (function() {
-  const PWD = localStorage.getItem('physiolab_pwd') || 'physio2026';
+  const WORKER = 'https://kinebilan-worker.sp-mck-kine.workers.dev';
+
+  // Vérifier si déjà authentifié
   if (sessionStorage.getItem('kb_auth') === '1') {
-    document.getElementById('passwordGate').style.display = 'none';
+    document.getElementById('authGate').style.display = 'none';
+    return;
   }
-  window.checkPwd = function() {
-    const val = document.getElementById('pwdInput').value;
-    if (val === PWD) {
-      sessionStorage.setItem('kb_auth', '1');
-      document.getElementById('passwordGate').style.display = 'none';
-    } else {
-      document.getElementById('pwdError').style.display = 'block';
-      document.getElementById('pwdInput').value = '';
+
+  // Vérifier si un token est dans l'URL
+  const params = new URLSearchParams(location.search);
+  const token = params.get('token');
+  if (token) {
+    fetch(WORKER + '/auth/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        sessionStorage.setItem('kb_auth', '1');
+        document.getElementById('authGate').style.display = 'none';
+        history.replaceState({}, '', location.pathname);
+      } else {
+        showError(data.error || 'Lien invalide ou expiré.');
+      }
+    })
+    .catch(() => showError('Erreur de connexion.'));
+  }
+
+  window.sendMagicLink = async function() {
+    const email = document.getElementById('emailInput').value.trim();
+    if (!email) return;
+    const btn = document.querySelector('#authStep1 button');
+    btn.disabled = true;
+    btn.textContent = 'Envoi en cours…';
+    try {
+      const res = await fetch(WORKER + '/auth/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        document.getElementById('authStep1').style.display = 'none';
+        document.getElementById('authEmailSent').textContent = email;
+        document.getElementById('authStep2').style.display = 'block';
+      } else {
+        showError(data.error || 'Erreur inconnue.');
+        btn.disabled = false;
+        btn.textContent = 'Recevoir le lien de connexion';
+      }
+    } catch(e) {
+      showError('Erreur de connexion.');
+      btn.disabled = false;
+      btn.textContent = 'Recevoir le lien de connexion';
     }
   };
+
+  function showError(msg) {
+    const el = document.getElementById('authError');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
 })();
 </script>
 
@@ -132,8 +192,8 @@ tailwind.config = {
       <button onclick="showView('dashboard')" id="nav-dashboard" class="px-4 py-2 rounded-xl text-sm font-medium transition-colors">Dossiers</button>
       <button onclick="showView('nouveau')" id="nav-nouveau" class="hidden px-4 py-2 rounded-xl text-sm font-medium transition-colors">Nouveau bilan</button>
       <button onclick="showView('bilan')" id="nav-bilan" class="hidden px-4 py-2 rounded-xl text-sm font-medium transition-colors">Bilan en cours</button>
-      <button onclick="changePwd()" class="p-2 text-on-surface-variant hover:text-primary transition-colors ml-2" title="Changer le mot de passe">
-        <span class="material-symbols-outlined text-xl">lock</span>
+      <button onclick="logout()" class="p-2 text-on-surface-variant hover:text-primary transition-colors ml-2" title="Se déconnecter">
+        <span class="material-symbols-outlined text-xl">logout</span>
       </button>
     </div>
   </div>
@@ -486,18 +546,11 @@ tailwind.config = {
 
 <script>
 // ============================================================
-// PASSWORD CHANGE
+// LOGOUT
 // ============================================================
-function changePwd() {
-  const current = prompt('Mot de passe actuel :');
-  const stored = localStorage.getItem('physiolab_pwd') || 'physio2026';
-  if (current !== stored) { alert('Mot de passe incorrect.'); return; }
-  const newPwd = prompt('Nouveau mot de passe :');
-  if (!newPwd || newPwd.length < 4) { alert('Mot de passe trop court (4 caractères min).'); return; }
-  const confirm = prompt('Confirmer le nouveau mot de passe :');
-  if (newPwd !== confirm) { alert('Les mots de passe ne correspondent pas.'); return; }
-  localStorage.setItem('physiolab_pwd', newPwd);
-  alert('Mot de passe mis à jour !');
+function logout() {
+  sessionStorage.removeItem('kb_auth');
+  location.reload();
 }
 
 // ============================================================

@@ -4,4 +4,8 @@ compatibility_date = "2024-01-01"
 account_id = "71dff7636ec9bac7192e7b6f2f6a87f2"
 
 [vars]
-# ANTHROPIC_API_KEY doit être défini comme secret via : npx wrangler secret put ANTHROPIC_API_KEY
+ALLOWED_EMAILS = "sp.mck.kine@gmail.com"
+
+[[kv_namespaces]]
+binding = "MAGIC_TOKENS"
+id = "4e58b15778094e5b97b72970b24b989f"
