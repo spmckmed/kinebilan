@@ -1327,17 +1327,14 @@ function exportPDF() {
   <span id="pageNum"></span>
 </div>
 
-<script>
-window.onload = function() {
-  window.print();
-};
-<\/script>
+
 </body>
 </html>\`;
 
   const win = window.open('', '_blank');
   win.document.write(html);
   win.document.close();
+  win.onload = () => { win.focus(); win.print(); };
 
   p.statut = 'exporte';
   p.lastMod = new Date().toLocaleString('fr-FR');
