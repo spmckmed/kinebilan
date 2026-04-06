@@ -7,7 +7,6 @@
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<script src="https://unpkg.com/docx@7.8.2/build/index.js"></script>
 <script id="tailwind-config">
 tailwind.config = {
   darkMode: "class",
@@ -322,8 +321,8 @@ tailwind.config = {
       <button onclick="saveCurrentPatient()" class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high text-primary rounded-xl font-medium text-sm hover:bg-surface-container-highest transition-colors">
         <span class="material-symbols-outlined text-lg">save</span> Sauvegarder
       </button>
-      <button id="btn-export-word" onclick="exportWord()" class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high text-primary rounded-xl font-medium text-sm hover:bg-surface-container-highest transition-colors opacity-40 cursor-not-allowed" disabled>
-        <span class="material-symbols-outlined text-lg">description</span> Export Word
+      <button id="btn-export-word" onclick="exportPDF()" class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high text-primary rounded-xl font-medium text-sm hover:bg-surface-container-highest transition-colors opacity-40 cursor-not-allowed" disabled>
+        <span class="material-symbols-outlined text-lg">picture_as_pdf</span> Export PDF
       </button>
       <button onclick="archiverPatient()" class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high text-on-surface-variant rounded-xl font-medium text-sm hover:bg-surface-container-highest transition-colors">
         <span class="material-symbols-outlined text-lg">archive</span> Archiver
@@ -525,10 +524,10 @@ tailwind.config = {
           </li>
         </ul>
 
-        <button id="btn-gen-word-sidebar" onclick="exportWord()" disabled
+        <button id="btn-gen-word-sidebar" onclick="exportPDF()" disabled
           class="w-full py-3.5 bg-surface-container text-on-surface-variant/50 cursor-not-allowed rounded-xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all">
-          <span class="material-symbols-outlined text-sm">description</span>
-          Générer le document Word
+          <span class="material-symbols-outlined text-sm">picture_as_pdf</span>
+          Générer le PDF
         </button>
         <p id="export-help" class="mt-3 text-[10px] text-on-surface-variant text-center leading-relaxed">Complétez B1 + B2 + captures pour activer l'export.</p>
       </div>
@@ -1095,188 +1094,73 @@ function updateStepper(p) {
 }
 
 // ============================================================
-// EXPORT WORD
+// EXPORT PDF
 // ============================================================
-async function exportWord() {
+function exportPDF() {
   const p = getPatient();
   if (!p) return;
 
-  showToast('Génération du document Word...', 'description');
+  const field = (label, value) => value
+    ? `<tr><td style="font-weight:600;padding:3px 12px 3px 0;white-space:nowrap;color:#444">${label}</td><td style="padding:3px 0;color:#222">${value}</td></tr>`
+    : '';
 
-  try {
-    const { Document, Packer, Paragraph, TextRun, ImageRun, HeadingLevel, AlignmentType, BorderStyle, WidthType } = window.docx;
+  const images = [['VVS', p.captureVVS], ['HCTSIB', p.captureHCTSIB]]
+    .filter(([, src]) => src)
+    .map(([label, src]) => `<div style="margin-bottom:24px"><div style="font-weight:600;font-size:11pt;margin-bottom:8px;color:#444">${label}</div><img src="${src}" style="max-width:100%;border:1px solid #e0e0e0;border-radius:6px"/></div>`)
+    .join('');
 
-    const children = [];
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<title>CR_${p.nom}_${p.prenom}_${p.dateEval || 'bilan'}</title>
+<style>
+  @page { size: A4; margin: 20mm 18mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; font-size: 11pt; color: #222; margin: 0; }
+  h1 { font-size: 13pt; font-weight: 700; text-align: center; margin: 0 0 20px; letter-spacing: 0.5px; }
+  h2 { font-size: 12pt; font-weight: 700; color: #126477; margin: 20px 0 4px; padding-bottom: 3px; border-bottom: 2px solid #126477; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 8px; }
+  .cr { font-size: 11pt; line-height: 1.7; }
+  .footer { margin-top: 32px; padding-top: 10px; border-top: 1px solid #ccc; text-align: center; font-size: 9pt; color: #6f797c; }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+<h1>COMPTE RENDU BILAN KINÉSITHÉRAPIQUE VESTIBULAIRE</h1>
+<h2>IDENTIFICATION DU PATIENT</h2>
+<table>
+  ${field('Nom', (p.prenom || '') + ' ' + (p.nom || ''))}
+  ${field('Âge', p.age ? p.age + ' ans' : '')}
+  ${field('Profession', p.profession)}
+  ${field('Loisirs', p.loisirs)}
+  ${field("Date de l'évaluation", p.dateEval)}
+  ${field('Prescripteur', p.prescripteur ? p.prescripteur + (p.datePrescription ? ' (ordonnance du ' + p.datePrescription + ')' : '') : '')}
+  ${field('Médecin traitant', p.mt)}
+  ${field('Motif de consultation', p.motif)}
+</table>
+${p.b1CR ? '<h2>BILAN CLINIQUE</h2><div class="cr">' + p.b1CR + '</div>' : ''}
+${p.b2CR ? '<h2>EXAMEN VIA RÉALITÉ VIRTUELLE</h2><div class="cr">' + p.b2CR + '</div>' : ''}
+${images ? '<h2>EXAMENS GRAPHIQUES</h2>' + images : ''}
+<div class="footer">
+  PhysioLab — Kinésithérapeute D.E. — DIU vertige et rééducation vestibulaire PARIS VI<br>
+  Pôle Santé Argouges — 42 rue de Beauvais 14400 BAYEUX — 06.11.77.70.76 — sp.mck.kine@gmail.com
+</div>
+</body>
+</html>`;
 
-    // Header line
-    const addPara = (text, opts = {}) => {
-      children.push(new Paragraph({
-        ...opts,
-        children: [new TextRun({ text, ...opts.run })]
-      }));
-    };
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  win.onload = () => { win.focus(); win.print(); };
 
-    const addBlank = () => children.push(new Paragraph({ children: [new TextRun('')] }));
-
-    // ---- En-tête ----
-    children.push(new Paragraph({
-      alignment: AlignmentType.CENTER,
-      children: [new TextRun({ text: 'COMPTE RENDU BILAN KINÉSITHÉRAPIQUE VESTIBULAIRE', bold: true, size: 28, font: 'Arial' })]
-    }));
-    addBlank();
-
-    // ---- ID Patient ----
-    children.push(new Paragraph({
-      children: [new TextRun({ text: 'IDENTIFICATION DU PATIENT', bold: true, size: 24, font: 'Arial', color: '126477' })]
-    }));
-    children.push(new Paragraph({ border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: '126477', space: 1 } }, children: [new TextRun('')] }));
-    addBlank();
-
-    const addField = (label, value) => {
-      children.push(new Paragraph({
-        children: [
-          new TextRun({ text: label + ' : ', bold: true, font: 'Arial', size: 22 }),
-          new TextRun({ text: value || '—', font: 'Arial', size: 22 })
-        ]
-      }));
-    };
-
-    addField('Nom', `${p.prenom} ${p.nom}`);
-    addField('Âge', p.age ? p.age + ' ans' : '');
-    if (p.profession) addField('Profession', p.profession);
-    if (p.loisirs) addField('Loisirs', p.loisirs);
-    addField("Date de l'évaluation", p.dateEval);
-    if (p.prescripteur) addField('Prescripteur', p.prescripteur + (p.datePrescription ? ` (ordonnance du ${p.datePrescription})` : ''));
-    if (p.mt) addField('Médecin traitant', p.mt);
-    if (p.motif) addField('Motif de consultation', p.motif);
-    addBlank();
-
-    // ---- CR Bilan 1 ----
-    const b1Text = htmlToPlainText(p.b1CR);
-    if (b1Text) {
-      const b1Lines = b1Text.split('\n').filter(l => l.trim());
-      let inSection = false;
-      for (const line of b1Lines) {
-        if (line.startsWith('**') && line.endsWith('**')) {
-          const title = line.replace(/\*\*/g, '');
-          addBlank();
-          children.push(new Paragraph({
-            children: [new TextRun({ text: title, bold: true, size: 24, font: 'Arial', color: '126477' })]
-          }));
-          children.push(new Paragraph({ border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: 'bfc8cc', space: 1 } }, children: [new TextRun('')] }));
-        } else if (line.startsWith('● ') || line.startsWith('– ') || line.startsWith('- ')) {
-          children.push(new Paragraph({
-            children: [new TextRun({ text: line, font: 'Arial', size: 20 })],
-            indent: { left: 360 }
-          }));
-        } else {
-          children.push(new Paragraph({
-            children: [new TextRun({ text: line, font: 'Arial', size: 20 })]
-          }));
-        }
-      }
-    }
-
-    // ---- CR Bilan 2 ----
-    const b2Text = htmlToPlainText(p.b2CR);
-    if (b2Text) {
-      addBlank();
-      children.push(new Paragraph({
-        children: [new TextRun({ text: 'EXAMEN VIA RÉALITÉ VIRTUELLE', bold: true, size: 24, font: 'Arial', color: '126477' })]
-      }));
-      children.push(new Paragraph({ border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: 'bfc8cc', space: 1 } }, children: [new TextRun('')] }));
-      const b2Lines = b2Text.split('\n').filter(l => l.trim());
-      for (const line of b2Lines) {
-        if (line.startsWith('**') && line.endsWith('**')) {
-          addBlank();
-          children.push(new Paragraph({
-            children: [new TextRun({ text: line.replace(/\*\*/g, ''), bold: true, size: 22, font: 'Arial' })]
-          }));
-        } else {
-          children.push(new Paragraph({
-            children: [new TextRun({ text: line, font: 'Arial', size: 20 })],
-            indent: line.startsWith('●') || line.startsWith('-') ? { left: 360 } : {}
-          }));
-        }
-      }
-    }
-
-    // ---- Captures ----
-    if (p.captureVVS || p.captureHCTSIB) {
-      addBlank();
-      children.push(new Paragraph({
-        children: [new TextRun({ text: 'EXAMENS GRAPHIQUES', bold: true, size: 24, font: 'Arial', color: '126477' })]
-      }));
-      children.push(new Paragraph({ border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: 'bfc8cc', space: 1 } }, children: [new TextRun('')] }));
-      addBlank();
-
-      for (const [label, dataUrl] of [['VVS', p.captureVVS], ['HCTSIB', p.captureHCTSIB]]) {
-        if (!dataUrl) continue;
-        children.push(new Paragraph({
-          children: [new TextRun({ text: label, bold: true, font: 'Arial', size: 20 })]
-        }));
-        addBlank();
-        const imgData = dataUrl.split(',')[1];
-        const mimeType = dataUrl.split(';')[0].split(':')[1];
-        const imgType = mimeType.includes('png') ? 'png' : 'jpg';
-        children.push(new Paragraph({
-          children: [new ImageRun({
-            data: Uint8Array.from(atob(imgData), c => c.charCodeAt(0)),
-            transformation: { width: 480, height: 320 },
-            type: imgType,
-          })]
-        }));
-        addBlank();
-      }
-    }
-
-    // ---- Footer separator ----
-    addBlank();
-    children.push(new Paragraph({ border: { top: { style: BorderStyle.SINGLE, size: 4, color: 'bfc8cc', space: 4 } }, children: [new TextRun('')] }));
-    children.push(new Paragraph({
-      alignment: AlignmentType.CENTER,
-      children: [new TextRun({ text: 'PhysioLab — Kinésithérapeute D.E. — DIU vertige et rééducation vestibulaire PARIS VI', font: 'Arial', size: 16, color: '6f797c' })]
-    }));
-    children.push(new Paragraph({
-      alignment: AlignmentType.CENTER,
-      children: [new TextRun({ text: 'Pôle Santé Argouges — 42 rue de Beauvais 14400 BAYEUX — 06.11.77.70.76 — sp.mck.kine@gmail.com', font: 'Arial', size: 16, color: '6f797c' })]
-    }));
-
-    // ---- Build doc ----
-    const doc = new Document({
-      sections: [{
-        properties: {
-          page: {
-            size: { width: 11906, height: 16838 },
-            margin: { top: 1000, right: 1000, bottom: 1000, left: 1000 }
-          }
-        },
-        children
-      }]
-    });
-
-    const blob = await Packer.toBlob(doc);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `CR_${p.nom}_${p.prenom}_${p.dateEval || 'bilan'}.docx`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    // Update status
-    p.statut = 'exporte';
-    p.lastMod = new Date().toLocaleString('fr-FR');
-    savePatients();
-    renderDashboard();
-    updateStepper(p);
-    showToast('Document Word généré', 'description');
-
-  } catch(e) {
-    console.error(e);
-    showToast('Erreur export : ' + e.message, 'error');
-  }
+  p.statut = 'exporte';
+  p.lastMod = new Date().toLocaleString('fr-FR');
+  savePatients();
+  renderDashboard();
+  updateStepper(p);
+  showToast('PDF généré', 'picture_as_pdf');
 }
-
 // ============================================================
 // UTILS
 // ============================================================
