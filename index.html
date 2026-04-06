@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>KinéBilan — Cabinet MACKAY Sébastien</title>
+<title>PhysioLab</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -81,6 +81,44 @@ tailwind.config = {
 </head>
 <body class="bg-surface text-on-surface min-h-screen">
 
+<!-- PASSWORD GATE -->
+<div id="passwordGate" style="position:fixed;inset:0;z-index:9999;background:#faf9f6;display:flex;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:12px;padding:40px;width:360px;box-shadow:0 12px 32px -4px rgba(44,62,80,0.12);text-align:center;">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#126477" stroke-width="1.5" style="margin-bottom:16px"><path d="M12 2C8.13 2 5 5.13 5 9v2H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2v-9a2 2 0 00-2-2h-1V9c0-3.87-3.13-7-7-7zm0 2c2.76 0 5 2.24 5 5v2H7V9c0-2.76 2.24-5 5-5zm0 10a2 2 0 110 4 2 2 0 010-4z"/></svg>
+    <h2 style="font-family:Newsreader,serif;font-size:22px;color:#1a1c1a;margin:0 0 6px">PhysioLab</h2>
+    <p style="font-size:13px;color:#3f484b;margin:0 0 24px">Gestion des bilans kinésithérapiques</p>
+    <input id="pwdInput" type="password" placeholder="Mot de passe" 
+      style="width:100%;padding:12px 16px;border:1px solid #e3e2df;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:12px;font-family:Public Sans,sans-serif"
+      onkeydown="if(event.key==='Enter')checkPwd()"
+    />
+    <button onclick="checkPwd()" 
+      style="width:100%;padding:12px;background:linear-gradient(135deg,#126477,#357d91);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:Public Sans,sans-serif">
+      Accéder
+    </button>
+    <p id="pwdError" style="color:#ba1a1a;font-size:12px;margin:10px 0 0;display:none">Mot de passe incorrect</p>
+    <p style="margin:16px 0 0;font-size:11px;color:#6f797c">Première connexion ? Mot de passe par défaut : <strong>physio2026</strong></p>
+  </div>
+</div>
+<script>
+(function() {
+  const PWD = localStorage.getItem('physiolab_pwd') || 'physio2026';
+  if (sessionStorage.getItem('kb_auth') === '1') {
+    document.getElementById('passwordGate').style.display = 'none';
+  }
+  window.checkPwd = function() {
+    const val = document.getElementById('pwdInput').value;
+    if (val === PWD) {
+      sessionStorage.setItem('kb_auth', '1');
+      document.getElementById('passwordGate').style.display = 'none';
+    } else {
+      document.getElementById('pwdError').style.display = 'block';
+      document.getElementById('pwdInput').value = '';
+    }
+  };
+})();
+</script>
+
+
 <!-- Config modal removed — API key stored server-side via Netlify env var -->
 
 <!-- ========== NAV ========== -->
@@ -88,12 +126,15 @@ tailwind.config = {
   <div class="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
     <div class="flex items-center gap-3">
       <span class="material-symbols-outlined text-primary">clinical_notes</span>
-      <span class="text-lg font-headline italic text-on-surface">KinéBilan — MACKAY Sébastien</span>
+      <span class="text-lg font-headline italic text-on-surface">PhysioLab</span>
     </div>
     <div class="flex items-center gap-2">
       <button onclick="showView('dashboard')" id="nav-dashboard" class="px-4 py-2 rounded-xl text-sm font-medium transition-colors">Dossiers</button>
       <button onclick="showView('nouveau')" id="nav-nouveau" class="hidden px-4 py-2 rounded-xl text-sm font-medium transition-colors">Nouveau bilan</button>
       <button onclick="showView('bilan')" id="nav-bilan" class="hidden px-4 py-2 rounded-xl text-sm font-medium transition-colors">Bilan en cours</button>
+      <button onclick="changePwd()" class="p-2 text-on-surface-variant hover:text-primary transition-colors ml-2" title="Changer le mot de passe">
+        <span class="material-symbols-outlined text-xl">lock</span>
+      </button>
     </div>
   </div>
 </nav>
@@ -215,7 +256,7 @@ tailwind.config = {
         <span id="bilan-lastmod" class="text-on-surface-variant text-xs"></span>
       </div>
       <h1 id="bilan-patient-name" class="text-4xl font-headline font-semibold mb-1"></h1>
-      <p class="text-lg serif italic text-primary">Bilan Vestibulaire — Évaluation Initiale</p>
+      <p class="text-lg serif italic text-primary">Évaluation Initiale</p>
     </div>
     <div class="flex flex-wrap gap-2">
       <button onclick="saveCurrentPatient()" class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high text-primary rounded-xl font-medium text-sm hover:bg-surface-container-highest transition-colors">
@@ -445,13 +486,28 @@ tailwind.config = {
 
 <script>
 // ============================================================
+// PASSWORD CHANGE
+// ============================================================
+function changePwd() {
+  const current = prompt('Mot de passe actuel :');
+  const stored = localStorage.getItem('physiolab_pwd') || 'physio2026';
+  if (current !== stored) { alert('Mot de passe incorrect.'); return; }
+  const newPwd = prompt('Nouveau mot de passe :');
+  if (!newPwd || newPwd.length < 4) { alert('Mot de passe trop court (4 caractères min).'); return; }
+  const confirm = prompt('Confirmer le nouveau mot de passe :');
+  if (newPwd !== confirm) { alert('Les mots de passe ne correspondent pas.'); return; }
+  localStorage.setItem('physiolab_pwd', newPwd);
+  alert('Mot de passe mis à jour !');
+}
+
+// ============================================================
 // STATE
 // ============================================================
 let patients = [];
 let currentPatientId = null;
 let apiKey = '';
 
-const SYSTEM_PROMPT_B1 = `Tu es un assistant spécialisé en kinésithérapie vestibulaire pour le Dr MACKAY Sébastien (DIU vertiges et rééducation vestibulaire PARIS VI, cabinet Pôle Santé Argouges, Bayeux).
+const SYSTEM_PROMPT_B1 = `Tu es un assistant spécialisé en kinésithérapie vestibulaire pour le Dr PhysioLab (DIU vertiges et rééducation vestibulaire PARIS VI, cabinet Pôle Santé Argouges, Bayeux).
 
 À partir de la transcription du bilan initial, rédige un compte-rendu clinique complet, professionnel et détaillé. Le style doit être celui d'un compte-rendu médical spécialisé : phrases complètes, prose fluide, rédaction développée — pas de listes sèches. Chaque section doit être rédigée comme dans un vrai courrier clinique destiné au médecin prescripteur.
 
@@ -518,7 +574,7 @@ RÈGLES ABSOLUES :
 - Si une information est absente de la transcription : omettre la ligne ou indiquer "non renseigné à ce jour"
 - Ne jamais inventer ni extrapoler des données cliniques non mentionnées`;
 
-const SYSTEM_PROMPT_B2 = `Tu es un assistant spécialisé en kinésithérapie vestibulaire pour le Dr MACKAY Sébastien (DIU vertiges et rééducation vestibulaire PARIS VI).
+const SYSTEM_PROMPT_B2 = `Tu es un assistant spécialisé en kinésithérapie vestibulaire pour le Dr PhysioLab (DIU vertiges et rééducation vestibulaire PARIS VI).
 
 À partir de la transcription de la séance de réalité virtuelle, rédige la section "Examen via réalité virtuelle / Intégration sensorielle" du compte-rendu clinique. Style : prose fluide, phrases complètes, rédaction médicale développée — pas de listes sèches.
 
@@ -1126,7 +1182,7 @@ async function exportWord() {
     children.push(new Paragraph({ border: { top: { style: BorderStyle.SINGLE, size: 4, color: 'bfc8cc', space: 4 } }, children: [new TextRun('')] }));
     children.push(new Paragraph({
       alignment: AlignmentType.CENTER,
-      children: [new TextRun({ text: 'MACKAY Sébastien — Kinésithérapeute D.E. — DIU vertige et rééducation vestibulaire PARIS VI', font: 'Arial', size: 16, color: '6f797c' })]
+      children: [new TextRun({ text: 'PhysioLab — Kinésithérapeute D.E. — DIU vertige et rééducation vestibulaire PARIS VI', font: 'Arial', size: 16, color: '6f797c' })]
     }));
     children.push(new Paragraph({
       alignment: AlignmentType.CENTER,
