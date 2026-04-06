@@ -1,3 +1,6 @@
+// background: true donne 26s au lieu de 10s sur Netlify
+exports.config = { schedule: undefined };
+
 exports.handler = async function(event) {
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -12,24 +15,19 @@ exports.handler = async function(event) {
   }
 
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Method Not Allowed' }),
-    };
+    return { statusCode: 405, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Method Not Allowed' }) };
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return {
-      statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Clé API non configurée sur le serveur' }),
-    };
+    return { statusCode: 500, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Clé API non configurée' }) };
   }
 
   try {
     const body = JSON.parse(event.body);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 24000);
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -39,34 +37,33 @@ exports.handler = async function(event) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
 
-    const text = await response.text();
+    clearTimeout(timeout);
 
+    const text = await response.text();
     let data;
-    try {
-      data = JSON.parse(text);
-    } catch (parseErr) {
+    try { data = JSON.parse(text); }
+    catch (e) {
       return {
         statusCode: 500,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({ error: 'Réponse API non-JSON : ' + text.slice(0, 200) }),
+        body: JSON.stringify({ error: 'Réponse non-JSON : ' + text.slice(0, 300) }),
       };
     }
 
     return {
       statusCode: response.status,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify(data),
     };
   } catch (e) {
+    const msg = e.name === 'AbortError' ? 'Timeout : génération trop longue, réduisez la transcription' : e.message;
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ error: e.message }),
+      body: JSON.stringify({ error: msg }),
     };
   }
 };
