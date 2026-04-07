@@ -637,6 +637,14 @@ function renderDashboard() {
 // ============================================================
 // PATIENT CRUD
 // ============================================================
+function getPatient() {
+  return patients.find(function(p) { return p.id === currentPatientId; }) || null;
+}
+
+function savePatients() {
+  localStorage.setItem('kinebilan_patients', JSON.stringify(patients));
+}
+
 function creerPatient() {
   var nom = document.getElementById('p-nom').value.trim();
   var prenom = document.getElementById('p-prenom').value.trim();
