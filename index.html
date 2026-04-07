@@ -289,8 +289,8 @@ tailwind.config = {
       <button onclick="saveCurrentPatient()" class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high text-primary rounded-xl font-medium text-sm hover:bg-surface-container-highest transition-colors">
         <span class="material-symbols-outlined text-lg">save</span> Sauvegarder
       </button>
-      <button id="btn-export-word" onclick="exportWord()" class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high text-primary rounded-xl font-medium text-sm hover:bg-surface-container-highest transition-colors opacity-40 cursor-not-allowed" disabled>
-        <span class="material-symbols-outlined text-lg">description</span> Export Word
+      <button id="btn-export-word" onclick="exportPDF()" id="btn-export-word" class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high text-primary rounded-xl font-medium text-sm hover:bg-surface-container-highest transition-colors opacity-40 cursor-not-allowed" disabled>
+        <span class="material-symbols-outlined text-lg">picture_as_pdf</span> Export PDF
       </button>
       <button onclick="archiverPatient()" class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high text-on-surface-variant rounded-xl font-medium text-sm hover:bg-surface-container-highest transition-colors">
         <span class="material-symbols-outlined text-lg">archive</span> Archiver
@@ -300,33 +300,23 @@ tailwind.config = {
 
   <!-- Stepper -->
   <div class="mb-10">
-    <div class="relative flex items-center justify-between w-full max-w-3xl">
+    <div class="relative flex items-center justify-between w-full max-w-lg">
       <div class="absolute top-5 left-0 w-full h-[2px] bg-surface-container-highest z-0"></div>
       <div id="stepper-bar" class="absolute top-5 left-0 h-[2px] bg-primary z-0 transition-all duration-500" style="width:0%"></div>
       <div class="step-item relative z-10 flex flex-col items-center gap-1.5" data-step="0">
-        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ring-4 ring-surface-container-low bg-surface-container-highest text-on-surface-variant">B1</div>
-        <span class="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Bilan 1</span>
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm ring-4 ring-surface-container-low bg-surface-container-highest text-on-surface-variant"><span class="material-symbols-outlined text-sm">edit_note</span></div>
+        <span class="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">En cours</span>
       </div>
       <div class="step-item relative z-10 flex flex-col items-center gap-1.5" data-step="1">
-        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ring-4 ring-surface-container-low bg-surface-container-highest text-on-surface-variant">B2</div>
-        <span class="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Bilan 2</span>
-      </div>
-      <div class="step-item relative z-10 flex flex-col items-center gap-1.5" data-step="2">
-        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm ring-4 ring-surface-container-low bg-surface-container-highest text-on-surface-variant">
-          <span class="material-symbols-outlined text-sm">photo_camera</span>
-        </div>
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm ring-4 ring-surface-container-low bg-surface-container-highest text-on-surface-variant"><span class="material-symbols-outlined text-sm">photo_camera</span></div>
         <span class="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Captures</span>
       </div>
-      <div class="step-item relative z-10 flex flex-col items-center gap-1.5" data-step="3">
-        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm ring-4 ring-surface-container-low bg-surface-container-highest text-on-surface-variant">
-          <span class="material-symbols-outlined text-sm">output</span>
-        </div>
+      <div class="step-item relative z-10 flex flex-col items-center gap-1.5" data-step="2">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm ring-4 ring-surface-container-low bg-surface-container-highest text-on-surface-variant"><span class="material-symbols-outlined text-sm">picture_as_pdf</span></div>
         <span class="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Export</span>
       </div>
-      <div class="step-item relative z-10 flex flex-col items-center gap-1.5" data-step="4">
-        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm ring-4 ring-surface-container-low bg-surface-container-highest text-on-surface-variant">
-          <span class="material-symbols-outlined text-sm">inventory_2</span>
-        </div>
+      <div class="step-item relative z-10 flex flex-col items-center gap-1.5" data-step="3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm ring-4 ring-surface-container-low bg-surface-container-highest text-on-surface-variant"><span class="material-symbols-outlined text-sm">inventory_2</span></div>
         <span class="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Archivé</span>
       </div>
     </div>
@@ -335,99 +325,39 @@ tailwind.config = {
   <!-- Main grid -->
   <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
 
-    <!-- LEFT: Bilan 1 + Bilan 2 -->
+    <!-- LEFT: Transcription unique -->
     <section class="xl:col-span-8 space-y-6">
-
-      <!-- BILAN 1 -->
       <div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0_12px_32px_-4px_rgba(44,62,80,0.06)]">
         <div class="flex items-center justify-between mb-5">
           <h2 class="text-2xl font-headline font-semibold flex items-center gap-2">
-            <span class="material-symbols-outlined text-primary">analytics</span> Bilan 1
+            <span class="material-symbols-outlined text-primary">analytics</span> Transcription
           </h2>
           <span id="b1-badge" class="px-3 py-1 bg-surface-container text-on-surface-variant text-[11px] font-bold uppercase rounded-full">En attente</span>
         </div>
-
         <div class="space-y-4">
           <div>
             <label class="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-2">Transcription audio brute</label>
-            <textarea id="b1-transcription" rows="7" 
+            <textarea id="b1-transcription" rows="9"
               class="w-full p-4 bg-surface-container text-sm rounded-xl border-none focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-on-surface-variant/40 font-mono"
-              placeholder="Collez ici la transcription du bilan initial (anamnèse, examen clinique, examen vestibulaire, résultats VNG, DHI...)"></textarea>
+              placeholder="Collez ici la transcription complète (anamnèse, examen clinique, examen vestibulaire, séance réalité virtuelle...)"></textarea>
           </div>
-
           <div class="flex justify-center">
-            <button onclick="genererCR(1)" id="btn-gen-b1" class="group flex items-center gap-3 px-8 py-3.5 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold text-sm shadow-md hover:opacity-90 transition-all active:scale-95">
+            <button onclick="genererCR()" id="btn-gen-b1" class="group flex items-center gap-3 px-8 py-3.5 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold text-sm shadow-md hover:opacity-90 transition-all active:scale-95">
               <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
               Générer le CR avec l'IA
             </button>
           </div>
-
-          <!-- CR généré B1 -->
           <div id="b1-cr-container" class="hidden mt-4">
             <div class="flex items-center justify-between mb-3">
               <label class="block text-xs font-bold uppercase tracking-wider text-on-surface-variant">Compte-rendu structuré</label>
-              <div class="flex gap-2">
-                <button onclick="regenererCR(1)" class="text-xs text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
-                  <span class="material-symbols-outlined text-sm">refresh</span> Regénérer
-                </button>
-                <button onclick="validerCR(1)" class="text-xs text-secondary font-bold hover:underline flex items-center gap-1">
-                  <span class="material-symbols-outlined text-sm">check_circle</span> Valider
-                </button>
-              </div>
+              <button onclick="genererCR()" class="text-xs text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">refresh</span> Regénérer
+              </button>
             </div>
-            <div id="b1-cr" contenteditable="true" 
-              class="editable-cr bg-surface-container-low p-6 rounded-xl text-sm text-on-surface leading-relaxed min-h-24 focus:ring-2 focus:ring-primary/15 rounded-xl transition-shadow">
+            <div id="b1-cr" contenteditable="true"
+              class="editable-cr bg-surface-container-low p-6 rounded-xl text-sm text-on-surface leading-relaxed min-h-24 focus:ring-2 focus:ring-primary/15 transition-shadow">
             </div>
             <p class="text-xs text-on-surface-variant mt-2 italic">Texte éditable directement — cliquez pour modifier</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- BILAN 2 -->
-      <div id="bilan2-section" class="bg-surface-container-high/50 rounded-xl p-8">
-        <div id="bilan2-locked" class="flex flex-col items-center justify-center text-center opacity-60 py-8">
-          <span class="material-symbols-outlined text-4xl text-on-surface-variant mb-3">lock</span>
-          <h3 class="text-xl font-headline font-semibold mb-2">Bilan 2 — Réalité virtuelle</h3>
-          <p class="text-sm text-on-surface-variant max-w-xs">Validez le Bilan 1 pour débloquer la section réalité virtuelle.</p>
-        </div>
-
-        <div id="bilan2-unlocked" class="hidden space-y-4">
-          <div class="flex items-center justify-between mb-1">
-            <h2 class="text-2xl font-headline font-semibold flex items-center gap-2">
-              <span class="material-symbols-outlined text-primary">vrpano</span> Bilan 2 — Réalité virtuelle
-            </h2>
-            <span id="b2-badge" class="px-3 py-1 bg-surface-container text-on-surface-variant text-[11px] font-bold uppercase rounded-full">En attente</span>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-2">Transcription audio — séance RV</label>
-            <textarea id="b2-transcription" rows="6" 
-              class="w-full p-4 bg-surface-container text-sm rounded-xl border-none focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-on-surface-variant/40 font-mono"
-              placeholder="Collez ici la transcription de la séance réalité virtuelle (VVS, HCTSIB, résultats, observations...)"></textarea>
-          </div>
-
-          <div class="flex justify-center">
-            <button onclick="genererCR(2)" id="btn-gen-b2" class="group flex items-center gap-3 px-8 py-3.5 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold text-sm shadow-md hover:opacity-90 transition-all active:scale-95">
-              <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
-              Générer le CR avec l'IA
-            </button>
-          </div>
-
-          <div id="b2-cr-container" class="hidden mt-4">
-            <div class="flex items-center justify-between mb-3">
-              <label class="block text-xs font-bold uppercase tracking-wider text-on-surface-variant">Compte-rendu RV structuré</label>
-              <div class="flex gap-2">
-                <button onclick="regenererCR(2)" class="text-xs text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
-                  <span class="material-symbols-outlined text-sm">refresh</span> Regénérer
-                </button>
-                <button onclick="validerCR(2)" class="text-xs text-secondary font-bold hover:underline flex items-center gap-1">
-                  <span class="material-symbols-outlined text-sm">check_circle</span> Valider
-                </button>
-              </div>
-            </div>
-            <div id="b2-cr" contenteditable="true" 
-              class="editable-cr bg-surface-container-low p-6 rounded-xl text-sm text-on-surface leading-relaxed min-h-24 focus:ring-2 focus:ring-primary/15 rounded-xl transition-shadow">
-            </div>
           </div>
         </div>
       </div>
@@ -436,12 +366,6 @@ tailwind.config = {
     <!-- RIGHT sidebar -->
     <aside class="xl:col-span-4 space-y-5">
 
-      <!-- Patient info -->
-      <div class="bg-primary/5 p-5 rounded-xl">
-        <h3 class="text-xs font-bold text-primary uppercase tracking-[0.2em] mb-4">Informations patient</h3>
-        <div id="patient-info-sidebar" class="space-y-2 text-sm"></div>
-      </div>
-
       <!-- Captures -->
       <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm">
         <div class="flex items-center justify-between mb-5">
@@ -449,7 +373,6 @@ tailwind.config = {
           <span id="captures-count" class="text-xs font-bold text-on-surface-variant">0/2</span>
         </div>
         <div class="grid grid-cols-2 gap-3">
-          <!-- VVS -->
           <div>
             <label for="upload-vvs" class="block cursor-pointer">
               <div id="preview-vvs" class="aspect-square bg-surface-container flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-outline-variant/40 hover:border-primary/50 transition-colors group">
@@ -460,7 +383,6 @@ tailwind.config = {
             <input id="upload-vvs" type="file" accept="image/*" class="hidden" onchange="handleCapture('vvs', this)"/>
             <button id="del-vvs" onclick="deleteCapture('vvs')" class="hidden w-full mt-1 text-xs text-error text-center hover:underline">Supprimer</button>
           </div>
-          <!-- HCTSIB -->
           <div>
             <label for="upload-hctsib" class="block cursor-pointer">
               <div id="preview-hctsib" class="aspect-square bg-surface-container flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-outline-variant/40 hover:border-primary/50 transition-colors group">
@@ -474,30 +396,15 @@ tailwind.config = {
         </div>
       </div>
 
-      <!-- Checklist & Export -->
+      <!-- Export -->
       <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm">
         <h2 class="text-xl font-headline font-semibold mb-5">Finalisation</h2>
-        <ul class="space-y-3 mb-6" id="checklist">
-          <li class="flex items-center gap-3" id="check-b1">
-            <span class="material-symbols-outlined text-surface-container-highest text-lg">radio_button_unchecked</span>
-            <span class="text-sm text-on-surface-variant">B1 validé</span>
-          </li>
-          <li class="flex items-center gap-3" id="check-b2">
-            <span class="material-symbols-outlined text-surface-container-highest text-lg">radio_button_unchecked</span>
-            <span class="text-sm text-on-surface-variant">B2 validé</span>
-          </li>
-          <li class="flex items-center gap-3" id="check-captures">
-            <span class="material-symbols-outlined text-surface-container-highest text-lg">radio_button_unchecked</span>
-            <span class="text-sm text-on-surface-variant">2 captures ajoutées</span>
-          </li>
-        </ul>
-
-        <button id="btn-gen-word-sidebar" onclick="exportWord()" disabled
+        <button id="btn-gen-word-sidebar" onclick="exportPDF()" disabled
           class="w-full py-3.5 bg-surface-container text-on-surface-variant/50 cursor-not-allowed rounded-xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all">
-          <span class="material-symbols-outlined text-sm">description</span>
-          Générer Word (.docx)
+          <span class="material-symbols-outlined text-sm">picture_as_pdf</span>
+          Générer PDF (.pdf)
         </button>
-        <p id="export-help" class="mt-3 text-[10px] text-on-surface-variant text-center leading-relaxed">Complétez B1 + B2 + captures pour activer l'export.</p>
+        <p id="export-help" class="mt-3 text-[10px] text-on-surface-variant text-center leading-relaxed">Générez le CR pour activer l'export PDF.</p>
       </div>
     </aside>
   </div>
@@ -631,7 +538,7 @@ RÈGLES : prose médicale fluide, valeurs chiffrées exactes, aucune invention d
 // ============================================================
 window.onload = function() {
   patients = JSON.parse(localStorage.getItem('kinebilan_patients') || '[]');
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
   renderDashboard();
   showView('dashboard');
 };
@@ -702,8 +609,9 @@ function renderDashboard() {
   }
 
   const statusLabels = {
-    bilan1: { label: 'Bilan 1', cls: 'bg-tertiary-container text-on-tertiary-container' },
-    bilan2: { label: 'Bilan 2', cls: 'bg-primary/10 text-primary' },
+    bilan1: { label: 'En cours', cls: 'bg-tertiary-container text-on-tertiary-container' },
+    bilan2: { label: 'En cours', cls: 'bg-tertiary-container text-on-tertiary-container' },
+    en_cours: { label: 'En cours', cls: 'bg-tertiary-container text-on-tertiary-container' },
     captures: { label: 'Captures', cls: 'bg-primary/10 text-primary' },
     exporte: { label: 'Exporté', cls: 'bg-secondary-container text-on-secondary-container' },
     envoye: { label: 'Envoyé', cls: 'bg-secondary-container text-on-secondary-container' },
@@ -756,24 +664,10 @@ function creerPatient() {
 }
 function ouvrirPatient(id) {
   currentPatientId = id;
-  const p = getPatient();
+  var p = getPatient();
   if (!p) return;
-
-  // Header
-  document.getElementById('bilan-patient-name').textContent = `${p.prenom} ${p.nom}`;
-  document.getElementById('bilan-lastmod').textContent = 'Modifié : ' + (p.lastMod || '');
-
-  // Sidebar info
-  const info = document.getElementById('patient-info-sidebar');
-  info.innerHTML = [
-    ['Âge', p.age ? p.age + ' ans' : '—'],
-    ['Évaluation', p.dateEval || '—'],
-    ['Prescripteur', p.prescripteur || '—'],
-    ['MT', p.mt || '—'],
-    ['Motif', p.motif || '—'],
-  ].map(([k, v]) => `<div class="flex justify-between"><span class="text-on-surface-variant">${k}</span><span class="font-medium text-right max-w-[55%]">${v}</span></div>`).join('');
-
-  // B1
+  document.getElementById('bilan-patient-name').textContent = p.prenom + ' ' + p.nom;
+  document.getElementById('bilan-lastmod').textContent = 'Modifie : ' + (p.lastMod || '');
   document.getElementById('b1-transcription').value = p.b1Transcription || '';
   if (p.b1CR) {
     document.getElementById('b1-cr').innerHTML = p.b1CR;
@@ -781,51 +675,18 @@ function ouvrirPatient(id) {
   } else {
     document.getElementById('b1-cr-container').classList.add('hidden');
   }
-
-  // B2 unlock
-  if (p.b1Valide) {
-    document.getElementById('bilan2-locked').classList.add('hidden');
-    document.getElementById('bilan2-unlocked').classList.remove('hidden');
-    document.getElementById('b2-transcription').value = p.b2Transcription || '';
-    if (p.b2CR) {
-      document.getElementById('b2-cr').innerHTML = p.b2CR;
-      document.getElementById('b2-cr-container').classList.remove('hidden');
-    } else {
-      document.getElementById('b2-cr-container').classList.add('hidden');
-    }
-  } else {
-    document.getElementById('bilan2-locked').classList.remove('hidden');
-    document.getElementById('bilan2-unlocked').classList.add('hidden');
-  }
-
-  // Captures
   renderCapture('vvs', p.captureVVS);
   renderCapture('hctsib', p.captureHCTSIB);
-
-  updateChecklist(p);
+  updateCapturesCount(p);
+  updateExportButton(p);
   updateStepper(p);
-  
-  document.getElementById('nav-bilan').classList.remove('hidden');
   showView('bilan');
 }
-
-function getPatient() {
-  return patients.find(p => p.id === currentPatientId);
-}
-
-function savePatients() {
-  localStorage.setItem('kinebilan_patients', JSON.stringify(patients));
-}
-
 function saveCurrentPatient() {
   const p = getPatient();
   if (!p) return;
   p.b1Transcription = document.getElementById('b1-transcription').value;
   p.b1CR = document.getElementById('b1-cr').innerHTML;
-  if (p.b1Valide) {
-    p.b2Transcription = document.getElementById('b2-transcription').value;
-    p.b2CR = document.getElementById('b2-cr').innerHTML;
-  }
   p.lastMod = new Date().toLocaleString('fr-FR');
   document.getElementById('bilan-lastmod').textContent = 'Modifié : ' + p.lastMod;
   savePatients();
@@ -846,39 +707,31 @@ function archiverPatient() {
 // ============================================================
 // IA — Génération CR
 // ============================================================
-async function genererCR(bilanNum) {
-  const transcriptionEl = document.getElementById(`b${bilanNum}-transcription`);
-  const transcription = transcriptionEl.value.trim();
+async function genererCR() {
+  var transcription = document.getElementById('b1-transcription').value.trim();
   if (!transcription) { showToast('Transcription vide', 'error'); return; }
-
-  const btnId = `btn-gen-b${bilanNum}`;
-  const btn = document.getElementById(btnId);
-  const originalHTML = btn.innerHTML;
-  btn.innerHTML = `<span class="spinner"></span> Génération en cours...`;
+  var btn = document.getElementById('btn-gen-b1');
+  var originalHTML = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span> Génération en cours...';
   btn.disabled = true;
-
-  const p = getPatient();
+  var p = getPatient();
   var contextPatient = p ? ('Patient : ' + p.prenom + ' ' + p.nom + '.') : '';
-
   try {
-    const response = await fetch('https://kinebilan-worker.sp-mck-kine.workers.dev', {
+    var response = await fetch('https://kinebilan-worker.sp-mck-kine.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 4000,
-        system: bilanNum === 1 ? SYSTEM_PROMPT_B1 : SYSTEM_PROMPT_B2,
-        messages: [{ role: 'user', content: `${contextPatient}\n\nTRANSCRIPTION :\n${transcription}` }]
+        system: SYSTEM_PROMPT_B1,
+        messages: [{ role: 'user', content: contextPatient + '\n\nTRANSCRIPTION :\n' + transcription }]
       })
     });
-
-    const responseText = await response.text();
-    let data;
+    var responseText = await response.text();
+    var data;
     try { data = JSON.parse(responseText); }
-    catch(e) { throw new Error("Réponse invalide : " + responseText.slice(0, 200)); }
-    if (!response.ok) {
-      throw new Error(data?.error?.message || data?.error || "Erreur API " + response.status);
-    }
+    catch(e) { throw new Error('Réponse invalide : ' + responseText.slice(0, 200)); }
+    if (!response.ok) { throw new Error((data && data.error && data.error.message) || (data && data.error) || 'Erreur API ' + response.status); }
     var crText = data.content[0].text;
     var crBody = crText;
     var firstLine = crText.split('\n')[0].trim();
@@ -892,35 +745,23 @@ async function genererCR(bilanNum) {
         if (pd.mt) p.mt = pd.mt;
         if (pd.motif) p.motif = pd.motif;
         if (pd.dateEval) p.dateEval = pd.dateEval;
-        savePatients();
-        var sidebarInfo = document.getElementById('patient-info-sidebar');
-        if (sidebarInfo) {
-          sidebarInfo.innerHTML = [
-            ['Age', p.age ? p.age + ' ans' : ''],
-            ['Evaluation', p.dateEval || ''],
-            ['Prescripteur', p.prescripteur || ''],
-            ['MT', p.mt || ''],
-            ['Motif', p.motif || '']
-          ].filter(function(r){ return r[1]; }).map(function(r){ return '<div class="flex justify-between py-1 border-b border-outline-variant/30"><span class="text-xs text-on-surface-variant">' + r[0] + '</span><span class="text-xs font-medium text-right max-w-[60%]">' + r[1] + '</span></div>'; }).join('');
-        }
       } catch(e) { console.warn('Patient data parse error:', e); }
       crBody = crText.split('\n').slice(1).join('\n').replace(/^\s*\n/, '');
     }
     var crHTML = markdownToHtml(crBody);
-
-    document.getElementById(`b${bilanNum}-cr`).innerHTML = crHTML;
-    document.getElementById(`b${bilanNum}-cr-container`).classList.remove('hidden');
-    document.getElementById(`b${bilanNum}-badge`).textContent = 'Généré — à valider';
-    document.getElementById(`b${bilanNum}-badge`).className = 'px-3 py-1 bg-tertiary-container text-on-tertiary-container text-[11px] font-bold uppercase rounded-full';
-
-    // Auto-save
+    document.getElementById('b1-cr').innerHTML = crHTML;
+    document.getElementById('b1-cr-container').classList.remove('hidden');
+    document.getElementById('b1-badge').textContent = 'Généré';
+    document.getElementById('b1-badge').className = 'px-3 py-1 bg-tertiary-container text-on-tertiary-container text-[11px] font-bold uppercase rounded-full';
     if (p) {
-      p[`b${bilanNum}Transcription`] = transcription;
-      p[`b${bilanNum}CR`] = crHTML;
+      p.b1Transcription = transcription;
+      p.b1CR = crHTML;
+      p.statut = 'en_cours';
       savePatients();
+      updateExportButton(p);
+      renderDashboard();
     }
-
-    showToast('CR généré — vérifiez et validez', 'auto_awesome');
+    showToast('CR généré', 'auto_awesome');
   } catch (e) {
     showToast('Erreur : ' + e.message, 'error');
     console.error(e);
@@ -929,37 +770,7 @@ async function genererCR(bilanNum) {
     btn.disabled = false;
   }
 }
-
-function regenererCR(n) { genererCR(n); }
-
-function validerCR(bilanNum) {
-  const p = getPatient();
-  if (!p) return;
-
-  const cr = document.getElementById(`b${bilanNum}-cr`).innerHTML;
-  p[`b${bilanNum}CR`] = cr;
-  p[`b${bilanNum}Valide`] = true;
-  p[`b${bilanNum}Transcription`] = document.getElementById(`b${bilanNum}-transcription`).value;
-
-  document.getElementById(`b${bilanNum}-badge`).textContent = 'Validé';
-  document.getElementById(`b${bilanNum}-badge`).className = 'px-3 py-1 bg-secondary-container text-on-secondary-container text-[11px] font-bold uppercase rounded-full';
-
-  if (bilanNum === 1) {
-    // Unlock B2
-    document.getElementById('bilan2-locked').classList.add('hidden');
-    document.getElementById('bilan2-unlocked').classList.remove('hidden');
-    p.statut = 'bilan2';
-  } else {
-    p.statut = 'captures';
-  }
-
-  p.lastMod = new Date().toLocaleString('fr-FR');
-  savePatients();
-  updateChecklist(p);
-  updateStepper(p);
-  renderDashboard();
-  showToast(`Bilan ${bilanNum} validé`, 'check_circle');
-}
+function regenererCR() { genererCR(); }
 
 // ============================================================
 // CAPTURES
@@ -1016,73 +827,105 @@ function updateCapturesCount(p) {
 // ============================================================
 // CHECKLIST & STEPPER
 // ============================================================
-function updateChecklist(p) {
-  const setCheck = (id, done) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const icon = el.querySelector('.material-symbols-outlined');
-    const text = el.querySelector('span:last-child');
-    if (done) {
-      icon.textContent = 'check_circle';
-      icon.className = 'material-symbols-outlined text-secondary text-lg';
-      icon.style.fontVariationSettings = "'FILL' 1";
-      text.className = 'text-sm text-on-surface';
-    } else {
-      icon.textContent = 'radio_button_unchecked';
-      icon.className = 'material-symbols-outlined text-surface-container-highest text-lg';
-      icon.style.fontVariationSettings = "'FILL' 0";
-      text.className = 'text-sm text-on-surface-variant';
-    }
-  };
-
-  const capturesOk = !!(p.captureVVS && p.captureHCTSIB);
-  setCheck('check-b1', p.b1Valide);
-  setCheck('check-b2', p.b2Valide);
-  setCheck('check-captures', capturesOk);
-
-  const exportOk = p.b1Valide && p.b2Valide && capturesOk;
-  const btnSidebar = document.getElementById('btn-gen-word-sidebar');
-  const btnTop = document.getElementById('btn-export-word');
-  const help = document.getElementById('export-help');
-
-  if (exportOk) {
-    btnSidebar.disabled = false;
-    btnSidebar.className = 'w-full py-3.5 bg-gradient-to-br from-primary to-primary-container text-white cursor-pointer rounded-xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-md';
-    btnTop.disabled = false;
-    btnTop.className = 'flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-medium text-sm hover:opacity-90 transition-colors shadow-md';
-    help.textContent = 'Tout est prêt. Générez votre document Word.';
+function updateExportButton(p) {
+  var hasCR = !!(p && p.b1CR && p.b1CR.length > 10);
+  var btnSidebar = document.getElementById('btn-gen-word-sidebar');
+  var btnTop = document.getElementById('btn-export-word');
+  var help = document.getElementById('export-help');
+  if (hasCR) {
+    if (btnSidebar) { btnSidebar.disabled = false; btnSidebar.className = 'w-full py-3.5 bg-gradient-to-br from-primary to-primary-container text-white cursor-pointer rounded-xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-md'; }
+    if (btnTop) { btnTop.disabled = false; btnTop.className = 'flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-medium text-sm hover:opacity-90 transition-colors shadow-md'; }
+    if (help) help.textContent = 'CR pret — generez votre PDF.';
   } else {
-    btnSidebar.disabled = true;
-    btnSidebar.className = 'w-full py-3.5 bg-surface-container text-on-surface-variant/50 cursor-not-allowed rounded-xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2';
-    btnTop.disabled = true;
-    btnTop.className = 'flex items-center gap-2 px-5 py-2.5 bg-surface-container-high text-primary rounded-xl font-medium text-sm opacity-40 cursor-not-allowed';
-    help.textContent = 'Complétez B1 + B2 + captures pour activer l\'export.';
-  }
-
-  if (capturesOk && p.b1Valide && p.b2Valide && p.statut !== 'exporte' && p.statut !== 'archive') {
-    p.statut = 'captures';
-    savePatients();
-    renderDashboard();
+    if (btnSidebar) { btnSidebar.disabled = true; btnSidebar.className = 'w-full py-3.5 bg-surface-container text-on-surface-variant/50 cursor-not-allowed rounded-xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2'; }
+    if (btnTop) { btnTop.disabled = true; btnTop.className = 'flex items-center gap-2 px-5 py-2.5 bg-surface-container-high text-primary rounded-xl font-medium text-sm opacity-40 cursor-not-allowed'; }
+    if (help) help.textContent = 'Generez le CR pour activer l\'export PDF.';
   }
 }
-
+function updateChecklist(p) { updateExportButton(p); }
 function updateStepper(p) {
-  const steps = document.querySelectorAll('.step-item');
-  const stepMap = { bilan1: 0, bilan2: 1, captures: 2, exporte: 3, envoye: 4, archive: 4 };
-  const currentStep = stepMap[p.statut] || 0;
-  const pct = [0, 25, 50, 75, 100][currentStep] || 0;
+  var steps = document.querySelectorAll('.step-item');
+  var stepMap = { bilan1: 0, en_cours: 0, bilan2: 1, captures: 1, exporte: 2, envoye: 3, archive: 3 };
+  var currentStep = stepMap[p.statut] !== undefined ? stepMap[p.statut] : 0;
+  var pct = [0, 33, 66, 100][currentStep] || 0;
   document.getElementById('stepper-bar').style.width = pct + '%';
-
-  steps.forEach((s, i) => {
-    const circle = s.querySelector('div');
-    if (i <= currentStep) {
-      circle.className = 'w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ring-4 ring-surface-container-low bg-primary text-white shadow-lg';
-    } else {
-      circle.className = 'w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ring-4 ring-surface-container-low bg-surface-container-highest text-on-surface-variant';
+  steps.forEach(function(s, i) {
+    var dot = s.querySelector('div');
+    var cls = dot.className;
+    if (i < currentStep) {
+      dot.className = cls.replace('bg-surface-container-highest text-on-surface-variant', 'bg-primary text-white');
+    } else if (i === currentStep) {
+      dot.className = cls.replace('bg-surface-container-highest text-on-surface-variant', 'bg-primary/20 text-primary');
     }
   });
 }
 
+// ============================================================
+// EXPORT PDF
+// ============================================================
+function exportPDF() {
+  var p = getPatient();
+  if (!p) return;
+
+  function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function hrow(label, value) {
+    if (!value) return '';
+    return '<tr><td style="font-weight:700;padding:3px 14px 3px 0;color:#126477;white-space:nowrap;font-size:10pt">' + esc(label) + '</td><td style="padding:3px 0;color:#222;font-size:10pt">' + esc(value) + '</td></tr>';
+  }
+
+  var prescInfo = p.prescripteur ? (p.prescripteur + (p.datePrescription ? ' — ordonnance du ' + p.datePrescription : '')) : '';
+
+  var images = [['Verticale Visuelle Subjective (VVS)', p.captureVVS], ['HCTSIB / Posturographie', p.captureHCTSIB]]
+    .filter(function(r){ return r[1]; })
+    .map(function(r){ return '<div style="page-break-before:always;text-align:center;padding-top:10px"><div style="font-weight:700;font-size:11pt;color:#126477;margin-bottom:16px;text-transform:uppercase">' + r[0] + '</div><img src="' + r[1] + '" style="max-width:100%;max-height:180mm;border:1px solid #cde4ea;border-radius:6px"/></div>'; })
+    .join('');
+
+  var css = '@page{size:A4;margin:18mm 18mm 28mm 18mm}'
+    + '*{box-sizing:border-box;margin:0;padding:0}'
+    + 'body{font-family:Arial,sans-serif;font-size:10.5pt;color:#1a1a1a;line-height:1.55}'
+    + 'h2{font-size:12pt;font-weight:700;color:#126477;margin:20px 0 4px;padding-bottom:3px;border-bottom:2px solid #126477}'
+    + 'strong{color:#126477}'
+    + '.cr{font-size:10.5pt;line-height:1.65}'
+    + '.footer{position:fixed;bottom:0;left:0;right:0;border-top:1.5px solid #126477;padding:6px 18mm;text-align:center;background:white;font-family:Arial,sans-serif}'
+    + '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
+
+  var patientBlock = '<div style="border:1.5px solid #126477;border-radius:6px;padding:14px 18px 10px;margin-bottom:22px;background:#f7fcfd">'
+    + '<div style="font-size:12pt;font-weight:700;color:#126477;text-align:center;margin-bottom:12px;text-transform:uppercase">COMPTE RENDU DE BILAN KINÉSITHÉRAPIQUE VESTIBULAIRE</div>'
+    + '<table style="border-collapse:collapse;width:100%">'
+    + hrow('Patient', ((p.prenom||'') + ' ' + (p.nom||'')).trim())
+    + hrow('Âge', p.age)
+    + hrow('Profession', p.profession)
+    + hrow('Loisirs', p.loisirs)
+    + hrow("Date d'évaluation", p.dateEval)
+    + hrow('Prescripteur', prescInfo)
+    + hrow('Médecin traitant', p.mt)
+    + hrow('Motif', p.motif)
+    + '</table></div>';
+
+  var body = patientBlock
+    + (p.b1CR ? '<div class="cr">' + p.b1CR + '</div>' : '')
+    + images;
+
+  var footer = '<div class="footer">'
+    + '<div style="font-weight:700;font-size:9.5pt;color:#126477">MACKAY Sébastien</div>'
+    + '<div style="font-size:8.5pt;color:#5a7a82">Masseur Kinésithérapeute D.E. &nbsp;| DIU vertiges et rééducation vestibulaire PARIS VI<br>Pôle Santé Argouges — 42 rue de Beauvais, 14400 BAYEUX &nbsp;|  06.11.77.70.76 &nbsp;|  sp.mck.kine@gmail.com</div>'
+    + '</div>';
+
+  var doc = '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"/><title>CR_' + esc(p.nom) + '_' + esc(p.prenom) + '</title><style>' + css + '</style></head><body>' + body + footer + '</body></html>';
+
+  var win = window.open('', '_blank');
+  win.document.write(doc);
+  win.document.close();
+  win.onload = function() { win.focus(); win.print(); };
+
+  p.statut = 'exporte';
+  p.lastMod = new Date().toLocaleString('fr-FR');
+  savePatients();
+  renderDashboard();
+  updateStepper(p);
+  showToast('PDF genere', 'picture_as_pdf');
+}
 // ============================================================
 // EXPORT PDF
 // ============================================================
