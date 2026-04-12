@@ -259,9 +259,17 @@ tailwind.config = {
         <input id="p-prenom" type="text" placeholder="Jean" class="w-full px-4 py-2.5 bg-surface-container rounded-xl text-sm border-none focus:ring-2 focus:ring-primary/20 outline-none"/>
       </div>
     </div>
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-2">Médecin traitant</label>
+      <input id="p-mt" type="text" placeholder="Dr. Martin" class="w-full px-4 py-2.5 bg-surface-container rounded-xl text-sm border-none focus:ring-2 focus:ring-primary/20 outline-none"/>
+    </div>
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-2">Prescripteur <span class="font-normal normal-case text-on-surface-variant/60">(si différent du médecin traitant)</span></label>
+      <input id="p-prescripteur" type="text" placeholder="Dr. Bernard — ORL" class="w-full px-4 py-2.5 bg-surface-container rounded-xl text-sm border-none focus:ring-2 focus:ring-primary/20 outline-none"/>
+    </div>
     <p class="text-xs text-on-surface-variant bg-surface-container rounded-xl px-4 py-3">
-      <span class="material-symbols-outlined text-sm align-middle mr-1">auto_awesome</span>
-      L'âge, la profession, le prescripteur, le motif et les autres informations seront extraits automatiquement par l'IA depuis la transcription audio du bilan.
+      <span class="material-symbols-outlined text-sm align-middle mr-1">lock</span>
+      Les noms de médecins renseignés ici ne doivent pas être mentionnés dans la transcription. L'IA extraira l'âge, la profession et le motif depuis l'audio.
     </p>
     <button onclick="creerPatient()" class="w-full py-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold text-sm tracking-wide hover:opacity-90 transition-opacity mt-2">
       Créer le dossier
@@ -396,6 +404,12 @@ tailwind.config = {
         </div>
       </div>
 
+      <!-- Suivi prise en charge -->
+      <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm">
+        <h2 class="text-xl font-headline font-semibold mb-4">Suivi</h2>
+        <div id="suivi-statuts" class="flex flex-col gap-2"></div>
+      </div>
+
       <!-- Export -->
       <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm">
         <h2 class="text-xl font-headline font-semibold mb-5">Finalisation</h2>
@@ -437,8 +451,8 @@ let apiKey = '';
 const SYSTEM_PROMPT_B1 = `Tu es un assistant spécialisé en kinésithérapie vestibulaire pour le Dr PhysioLab (DIU vertiges et rééducation vestibulaire PARIS VI, cabinet Pôle Santé Argouges, Bayeux).
 
 En PREMIÈRE ligne de ta réponse (avant tout contenu), écris une ligne JSON au format EXACT :
-PATIENT:{"age":"","profession":"","loisirs":"","prescripteur":"","mt":"","motif":"","dateEval":""}
-Remplis uniquement les valeurs trouvées dans la transcription. Pour dateEval utilise le format YYYY-MM-DD (date du jour si non mentionnée). Laisse "" pour les champs introuvables. Cette ligne ne doit PAS apparaître dans le compte-rendu.
+PATIENT:{"age":"","profession":"","loisirs":"","motif":"","dateEval":""}
+Remplis uniquement les valeurs trouvées dans la transcription. Pour dateEval utilise le format YYYY-MM-DD (date du jour si non mentionnée). Laisse "" pour les champs introuvables. Ne tente PAS d'extraire le médecin traitant ni le prescripteur (déjà renseignés manuellement). Cette ligne ne doit PAS apparaître dans le compte-rendu.
 
 À partir de la transcription du bilan initial, rédige un compte-rendu clinique complet, professionnel et détaillé. Le style doit être celui d'un compte-rendu médical spécialisé : phrases complètes, prose fluide, rédaction développée — pas de listes sèches. Chaque section doit être rédigée comme dans un vrai courrier clinique destiné au médecin prescripteur.
 
@@ -591,8 +605,8 @@ function renderDashboard() {
   const list = document.getElementById('patientList');
   const stats = {
     total: patients.length,
-    encours: patients.filter(p => !['archive', 'envoye'].includes(p.statut)).length,
-    exportes: patients.filter(p => p.statut === 'exporte' || p.statut === 'envoye').length,
+    encours: patients.filter(p => !['archive', 'envoye', 'exporte', 'bilan_envoye'].includes(p.statut)).length,
+    exportes: patients.filter(p => ['exporte', 'envoye', 'bilan_envoye'].includes(p.statut)).length,
     archives: patients.filter(p => p.statut === 'archive').length,
   };
   document.getElementById('stat-total').textContent = stats.total;
@@ -609,6 +623,11 @@ function renderDashboard() {
   }
 
   const statusLabels = {
+    seance1: { label: 'Séance 1', cls: 'bg-primary/10 text-primary' },
+    seance2: { label: 'Séance 2', cls: 'bg-primary/20 text-primary' },
+    bilan_a_generer: { label: 'Bilan à générer', cls: 'bg-tertiary-container text-on-tertiary-container' },
+    bilan_a_envoyer: { label: 'Bilan à envoyer', cls: 'bg-secondary/10 text-secondary' },
+    bilan_envoye: { label: 'Bilan envoyé', cls: 'bg-secondary-container text-on-secondary-container' },
     bilan1: { label: 'En cours', cls: 'bg-tertiary-container text-on-tertiary-container' },
     bilan2: { label: 'En cours', cls: 'bg-tertiary-container text-on-tertiary-container' },
     en_cours: { label: 'En cours', cls: 'bg-tertiary-container text-on-tertiary-container' },
@@ -648,6 +667,8 @@ function savePatients() {
 function creerPatient() {
   var nom = document.getElementById('p-nom').value.trim();
   var prenom = document.getElementById('p-prenom').value.trim();
+  var mt = document.getElementById('p-mt').value.trim();
+  var prescripteur = document.getElementById('p-prescripteur').value.trim();
   if (!nom || !prenom) { showToast('Nom et prénom requis', 'error'); return; }
   var today = new Date().toISOString().split('T')[0];
   var p = {
@@ -655,9 +676,9 @@ function creerPatient() {
     nom: nom, prenom: prenom,
     age: '', dateEval: today,
     profession: '', loisirs: '',
-    prescripteur: '', datePrescription: '',
-    mt: '', motif: '',
-    statut: 'bilan1',
+    prescripteur: prescripteur, datePrescription: '',
+    mt: mt, motif: '',
+    statut: 'seance1',
     b1Transcription: '', b1CR: '', b1Valide: false,
     b2Transcription: '', b2CR: '', b2Valide: false,
     captureVVS: null, captureHCTSIB: null,
@@ -669,17 +690,22 @@ function creerPatient() {
   ouvrirPatient(p.id);
   document.getElementById('p-nom').value = '';
   document.getElementById('p-prenom').value = '';
+  document.getElementById('p-mt').value = '';
+  document.getElementById('p-prescripteur').value = '';
 }
 function ouvrirPatient(id) {
   currentPatientId = id;
   var p = getPatient();
   if (!p) return;
   document.getElementById('bilan-patient-name').textContent = p.prenom + ' ' + p.nom;
-  document.getElementById('bilan-lastmod').textContent = 'Modifie : ' + (p.lastMod || '');
+  document.getElementById('bilan-lastmod').textContent = 'Modifié : ' + (p.lastMod || '');
+  document.getElementById('bilan-status-badge').textContent = getStatutLabel(p.statut);
   document.getElementById('b1-transcription').value = p.b1Transcription || '';
   if (p.b1CR) {
     document.getElementById('b1-cr').innerHTML = p.b1CR;
     document.getElementById('b1-cr-container').classList.remove('hidden');
+    document.getElementById('b1-badge').textContent = 'Généré';
+    document.getElementById('b1-badge').className = 'px-3 py-1 bg-tertiary-container text-on-tertiary-container text-[11px] font-bold uppercase rounded-full';
   } else {
     document.getElementById('b1-cr-container').classList.add('hidden');
   }
@@ -688,6 +714,7 @@ function ouvrirPatient(id) {
   updateCapturesCount(p);
   updateExportButton(p);
   updateStepper(p);
+  renderSuiviStatuts(p);
   showView('bilan');
 }
 function saveCurrentPatient() {
@@ -723,7 +750,13 @@ async function genererCR() {
   btn.innerHTML = '<span class="spinner"></span> Génération en cours...';
   btn.disabled = true;
   var p = getPatient();
-  var contextPatient = p ? ('Patient : ' + p.prenom + ' ' + p.nom + '.') : '';
+  var contextParts = [];
+  if (p) {
+    contextParts.push('Patient : ' + p.prenom + ' ' + p.nom + '.');
+    if (p.mt) contextParts.push('Médecin traitant : ' + p.mt + '.');
+    if (p.prescripteur) contextParts.push('Prescripteur : ' + p.prescripteur + '.');
+  }
+  var contextPatient = contextParts.join(' ');
   try {
     var response = await fetch('https://kinebilan-worker.sp-mck-kine.workers.dev', {
       method: 'POST',
@@ -749,8 +782,7 @@ async function genererCR() {
         if (pd.age) p.age = pd.age;
         if (pd.profession) p.profession = pd.profession;
         if (pd.loisirs) p.loisirs = pd.loisirs;
-        if (pd.prescripteur) p.prescripteur = pd.prescripteur;
-        if (pd.mt) p.mt = pd.mt;
+        // Ne pas écraser prescripteur et mt (saisis manuellement)
         if (pd.motif) p.motif = pd.motif;
         if (pd.dateEval) p.dateEval = pd.dateEval;
       } catch(e) { console.warn('Patient data parse error:', e); }
@@ -833,6 +865,59 @@ function updateCapturesCount(p) {
 }
 
 // ============================================================
+// SUIVI PRISE EN CHARGE
+// ============================================================
+var SUIVI_STATUTS = [
+  { key: 'seance1', label: 'Séance 1', icon: 'self_improvement' },
+  { key: 'seance2', label: 'Séance 2', icon: 'self_improvement' },
+  { key: 'bilan_a_generer', label: 'Bilan à générer', icon: 'edit_document' },
+  { key: 'bilan_a_envoyer', label: 'Bilan à envoyer', icon: 'send' },
+  { key: 'bilan_envoye', label: 'Bilan envoyé', icon: 'check_circle' },
+];
+
+function getStatutLabel(statut) {
+  var labels = {
+    seance1: 'Séance 1', seance2: 'Séance 2',
+    bilan_a_generer: 'Bilan à générer', bilan_a_envoyer: 'Bilan à envoyer',
+    bilan_envoye: 'Bilan envoyé',
+    en_cours: 'En cours', bilan1: 'En cours', bilan2: 'En cours',
+    captures: 'Captures', exporte: 'Exporté', envoye: 'Envoyé', archive: 'Archivé'
+  };
+  return labels[statut] || statut;
+}
+
+function renderSuiviStatuts(p) {
+  var container = document.getElementById('suivi-statuts');
+  if (!container) return;
+  container.innerHTML = SUIVI_STATUTS.map(function(s) {
+    var isActive = p.statut === s.key;
+    var baseCls = 'flex items-center gap-3 w-full px-4 py-2.5 rounded-xl font-medium text-sm cursor-pointer transition-all text-left';
+    var cls = isActive
+      ? baseCls + ' bg-primary text-white shadow-sm'
+      : baseCls + ' bg-surface-container text-on-surface-variant hover:bg-surface-container-high';
+    var checkMark = isActive ? '<span class="material-symbols-outlined text-sm ml-auto" style="font-variation-settings:\'FILL\' 1">check_circle</span>' : '';
+    return '<button class="' + cls + '" onclick="setStatut(\'' + s.key + '\')">'
+      + '<span class="material-symbols-outlined text-base">' + s.icon + '</span>'
+      + '<span>' + s.label + '</span>'
+      + checkMark
+      + '</button>';
+  }).join('');
+}
+
+function setStatut(statut) {
+  var p = getPatient();
+  if (!p) return;
+  p.statut = statut;
+  p.lastMod = new Date().toLocaleString('fr-FR');
+  savePatients();
+  renderSuiviStatuts(p);
+  renderDashboard();
+  document.getElementById('bilan-status-badge').textContent = getStatutLabel(statut);
+  document.getElementById('bilan-lastmod').textContent = 'Modifié : ' + p.lastMod;
+  showToast('Statut : ' + getStatutLabel(statut), 'check_circle');
+}
+
+// ============================================================
 // CHECKLIST & STEPPER
 // ============================================================
 function updateExportButton(p) {
@@ -853,7 +938,13 @@ function updateExportButton(p) {
 function updateChecklist(p) { updateExportButton(p); }
 function updateStepper(p) {
   var steps = document.querySelectorAll('.step-item');
-  var stepMap = { bilan1: 0, en_cours: 0, bilan2: 1, captures: 1, exporte: 2, envoye: 3, archive: 3 };
+  var stepMap = {
+    seance1: 0, seance2: 0, bilan_a_generer: 0,
+    bilan1: 0, en_cours: 0,
+    bilan_a_envoyer: 1, bilan2: 1, captures: 1,
+    exporte: 2, bilan_envoye: 2,
+    envoye: 3, archive: 3
+  };
   var currentStep = stepMap[p.statut] !== undefined ? stepMap[p.statut] : 0;
   var pct = [0, 33, 66, 100][currentStep] || 0;
   document.getElementById('stepper-bar').style.width = pct + '%';
