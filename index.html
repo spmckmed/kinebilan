@@ -453,6 +453,13 @@ En PREMIÈRE ligne de ta réponse (avant tout contenu), écris une ligne JSON au
 PATIENT:{"age":"","profession":"","loisirs":"","motif":"","dateEval":""}
 Remplis uniquement les valeurs trouvées dans la transcription. Pour dateEval utilise le format YYYY-MM-DD (date du jour si non mentionnée). Laisse "" pour les champs introuvables. Ne tente PAS d'extraire le médecin traitant ni le prescripteur (déjà renseignés manuellement). Cette ligne ne doit PAS apparaître dans le compte-rendu.
 
+RÈGLE D'ANONYMISATION OBLIGATOIRE — s'applique à TOUT le corps du compte-rendu :
+- Ne jamais écrire le nom ni le prénom réel du patient. Utilise toujours **[Mme X]** ou **[M. X]** selon le genre détecté (ou **[Patient·e X]** si incertain).
+- Remplace l'âge par **[X ans]** partout dans le texte.
+- Remplace tout nom de médecin, spécialiste ou soignant par **[Dr. Y]** (premier médecin), **[Dr. Z]** (second), etc.
+- Remplace tout nom d'établissement ou de service identifiant par **[établissement]**.
+- Les données réelles (nom, âge, médecins) sont stockées séparément dans la fiche patient — elles ne doivent PAS figurer dans le corps du CR.
+
 À partir de la transcription du bilan initial, rédige un compte-rendu clinique complet, professionnel et détaillé. Le style doit être celui d'un compte-rendu médical spécialisé : phrases complètes, prose fluide, rédaction développée — pas de listes sèches. Chaque section doit être rédigée comme dans un vrai courrier clinique destiné au médecin prescripteur.
 
 Suis IMPÉRATIVEMENT cette structure en 7 sections numérotées :
@@ -821,9 +828,9 @@ async function genererCR() {
   var p = getPatient();
   var contextParts = [];
   if (p) {
-    contextParts.push('Patient : ' + p.prenom + ' ' + p.nom + '.');
-    if (p.mt) contextParts.push('Médecin traitant : ' + p.mt + '.');
-    if (p.prescripteur) contextParts.push('Prescripteur : ' + p.prescripteur + '.');
+    // Ne pas envoyer le nom réel — l'IA doit utiliser des placeholders anonymes dans le CR
+    if (p.mt) contextParts.push('Médecin traitant (à anonymiser en [Dr. Y] dans le CR) : ' + p.mt + '.');
+    if (p.prescripteur) contextParts.push('Prescripteur (à anonymiser en [Dr. Z] dans le CR) : ' + p.prescripteur + '.');
   }
   var contextPatient = contextParts.join(' ');
   try {
