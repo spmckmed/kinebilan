@@ -304,6 +304,9 @@ tailwind.config = {
       <button onclick="archiverPatient()" class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high text-on-surface-variant rounded-xl font-medium text-sm hover:bg-surface-container-highest transition-colors">
         <span class="material-symbols-outlined text-lg">archive</span> Archiver
       </button>
+      <button onclick="supprimerPatient()" class="flex items-center gap-2 px-5 py-2.5 bg-error-container text-error rounded-xl font-medium text-sm hover:opacity-80 transition-colors">
+        <span class="material-symbols-outlined text-lg">delete</span> Supprimer
+      </button>
     </div>
   </div>
 
@@ -324,42 +327,84 @@ tailwind.config = {
   <!-- Main grid -->
   <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
 
-    <!-- LEFT: Transcription unique -->
-    <section class="xl:col-span-8 space-y-6">
-      <div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0_12px_32px_-4px_rgba(44,62,80,0.06)]">
-        <div class="flex items-center justify-between mb-5">
-          <h2 class="text-2xl font-headline font-semibold flex items-center gap-2">
-            <span class="material-symbols-outlined text-primary">analytics</span> Transcription
-          </h2>
-          <span id="b1-badge" class="px-3 py-1 bg-surface-container text-on-surface-variant text-[11px] font-bold uppercase rounded-full">En attente</span>
-        </div>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-2">Transcription audio brute</label>
-            <textarea id="b1-transcription" rows="9"
-              class="w-full p-4 bg-surface-container text-sm rounded-xl border-none focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-on-surface-variant/40 font-mono"
-              placeholder="Collez ici la transcription complète (anamnèse, examen clinique, examen vestibulaire, séance réalité virtuelle...)"></textarea>
+    <!-- LEFT: Zones cliniques -->
+    <section class="xl:col-span-8 space-y-5">
+
+      <!-- Zone 1 : Bilan initial -->
+      <div class="bg-surface-container-lowest rounded-xl p-7 shadow-sm">
+        <h2 class="text-xl font-headline font-semibold flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-primary text-xl">mic</span> Bilan initial
+        </h2>
+        <textarea id="b1-transcription" rows="8"
+          class="w-full p-4 bg-surface-container text-sm rounded-xl border-none focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-on-surface-variant/40 font-mono"
+          placeholder="Transcription audio — anamnèse, examen clinique, examen vestibulaire..."></textarea>
+      </div>
+
+      <!-- Zone 2 : Bilan VR / Fauteuil rotatoire + DHI -->
+      <div class="bg-surface-container-lowest rounded-xl p-7 shadow-sm">
+        <h2 class="text-xl font-headline font-semibold flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-primary text-xl">view_in_ar</span> Bilan VR / Fauteuil rotatoire
+        </h2>
+        <textarea id="b2-transcription" rows="8"
+          class="w-full p-4 bg-surface-container text-sm rounded-xl border-none focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-on-surface-variant/40 font-mono"
+          placeholder="Transcription audio — VVS, HCTSIB, fauteuil rotatoire (vection, fixation, ERI)..."></textarea>
+        <div class="mt-4 flex items-center gap-4">
+          <label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant shrink-0">Score DHI</label>
+          <div class="flex items-center gap-2">
+            <input id="dhi-score" type="number" min="0" max="100" placeholder="—"
+              class="w-20 px-3 py-2 bg-surface-container text-sm rounded-xl border-none focus:ring-2 focus:ring-primary/20 outline-none text-center font-semibold"/>
+            <span class="text-sm text-on-surface-variant">/ 100</span>
           </div>
-          <div class="flex justify-center">
-            <button onclick="genererCR()" id="btn-gen-b1" class="group flex items-center gap-3 px-8 py-3.5 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold text-sm shadow-md hover:opacity-90 transition-all active:scale-95">
-              <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
-              Générer le CR avec l'IA
-            </button>
-          </div>
-          <div id="b1-cr-container" class="hidden mt-4">
-            <div class="flex items-center justify-between mb-3">
-              <label class="block text-xs font-bold uppercase tracking-wider text-on-surface-variant">Compte-rendu structuré</label>
-              <button onclick="genererCR()" class="text-xs text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
-                <span class="material-symbols-outlined text-sm">refresh</span> Regénérer
-              </button>
-            </div>
-            <div id="b1-cr" contenteditable="true"
-              class="editable-cr bg-surface-container-low p-6 rounded-xl text-sm text-on-surface leading-relaxed min-h-24 focus:ring-2 focus:ring-primary/15 transition-shadow">
-            </div>
-            <p class="text-xs text-on-surface-variant mt-2 italic">Texte éditable directement — cliquez pour modifier</p>
-          </div>
+          <span class="text-xs text-on-surface-variant italic">(Dizziness Handicap Inventory — 0 = aucun, 100 = handicap maximal)</span>
         </div>
       </div>
+
+      <!-- Zone 3 : Documents externes -->
+      <div class="bg-surface-container-lowest rounded-xl p-7 shadow-sm">
+        <h2 class="text-xl font-headline font-semibold flex items-center gap-2 mb-2">
+          <span class="material-symbols-outlined text-primary text-xl">file_copy</span> Documents externes
+        </h2>
+        <p class="text-xs text-on-surface-variant mb-4">CR d'hospitalisation, IRM, audiogramme, VNG, courrier ORL...</p>
+        <textarea id="docs-externes" rows="7"
+          class="w-full p-4 bg-surface-container text-sm rounded-xl border-none focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-on-surface-variant/40"
+          placeholder="Coller ici le contenu des documents externes à intégrer dans le CR..."></textarea>
+      </div>
+
+      <!-- Zone 4 : Bilan final -->
+      <div class="bg-surface-container-lowest rounded-xl p-7 shadow-sm">
+        <h2 class="text-xl font-headline font-semibold flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-primary text-xl">task_alt</span> Bilan de fin de prise en charge
+        </h2>
+        <textarea id="bilan-final" rows="7"
+          class="w-full p-4 bg-surface-container text-sm rounded-xl border-none focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-on-surface-variant/40 font-mono"
+          placeholder="Transcription audio — résultats obtenus, nombre de séances, évolution, recommandations..."></textarea>
+      </div>
+
+      <!-- Bouton unique génération + CR généré -->
+      <div class="flex justify-center pt-2">
+        <button onclick="genererCR()" id="btn-gen-b1" class="group flex items-center gap-3 px-8 py-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold text-sm shadow-md hover:opacity-90 transition-all active:scale-95">
+          <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+          Générer le CR complet avec l'IA
+        </button>
+      </div>
+
+      <div id="b1-cr-container" class="hidden">
+        <div class="bg-surface-container-lowest rounded-xl p-7 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-headline font-semibold flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary text-xl">description</span> Compte-rendu structuré
+            </h2>
+            <button onclick="genererCR()" class="text-xs text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
+              <span class="material-symbols-outlined text-sm">refresh</span> Regénérer
+            </button>
+          </div>
+          <div id="b1-cr" contenteditable="true"
+            class="editable-cr bg-surface-container-low p-6 rounded-xl text-sm text-on-surface leading-relaxed min-h-24 focus:ring-2 focus:ring-primary/15 transition-shadow">
+          </div>
+          <p class="text-xs text-on-surface-variant mt-2 italic">Texte éditable directement — cliquez pour modifier</p>
+        </div>
+      </div>
+
     </section>
 
     <!-- RIGHT sidebar -->
@@ -451,7 +496,14 @@ const SYSTEM_PROMPT_B1 = `Tu es un assistant spécialisé en kinésithérapie ve
 
 En PREMIÈRE ligne de ta réponse (avant tout contenu), écris une ligne JSON au format EXACT :
 PATIENT:{"age":"","profession":"","loisirs":"","motif":"","dateEval":""}
-Remplis uniquement les valeurs trouvées dans la transcription. Pour dateEval utilise le format YYYY-MM-DD (date du jour si non mentionnée). Laisse "" pour les champs introuvables. Ne tente PAS d'extraire le médecin traitant ni le prescripteur (déjà renseignés manuellement). Cette ligne ne doit PAS apparaître dans le compte-rendu.
+Remplis uniquement les valeurs trouvées dans les données reçues. Pour dateEval utilise le format YYYY-MM-DD (date du jour si non mentionnée). Laisse "" pour les champs introuvables. Ne tente PAS d'extraire le médecin traitant ni le prescripteur (déjà renseignés manuellement). Cette ligne ne doit PAS apparaître dans le compte-rendu.
+
+DONNÉES D'ENTRÉE : tu vas recevoir plusieurs sections identifiées par des balises "---". Toutes les sections ne seront pas forcément présentes — utilise uniquement ce qui est fourni :
+- BILAN INITIAL : anamnèse, examen clinique et vestibulaire de la première séance
+- BILAN VR / FAUTEUIL ROTATOIRE : examen via réalité virtuelle (VVS, HCTSIB) et fauteuil rotatoire
+- SCORE DHI : score Dizziness Handicap Inventory sur 100. Si présent, l'intégrer dans la section 3 avec son interprétation (léger < 20, modéré 20–40, sévère > 40) et dans le résumé synthétique.
+- DOCUMENTS EXTERNES : CR d'hospitalisation, IRM, audiogramme, VNG, courrier ORL — à intégrer dans les sections pertinentes (antécédents, examens complémentaires, analyse audiométrique)
+- BILAN FINAL : résultats de la prise en charge, nombre de séances, évolution — à intégrer dans la section 7 (orientation thérapeutique) ou en section dédiée si suffisamment riche
 
 RÈGLE D'ANONYMISATION OBLIGATOIRE — s'applique à TOUT le corps du compte-rendu :
 - Ne jamais écrire le nom ni le prénom réel du patient. Utilise toujours **[Mme X]** ou **[M. X]** selon le genre détecté (ou **[Patient·e X]** si incertain).
@@ -621,10 +673,11 @@ function showView(v) {
 // DASHBOARD
 // ============================================================
 const PIPELINE_STATUTS = [
-  { key: 'bilan_general', label: 'Bilan général', short: 'Gén.' },
-  { key: 'bilan_vr',      label: 'Bilan VR fait',  short: 'VR' },
-  { key: 'bilan_genere',  label: 'CR généré',       short: 'CR' },
-  { key: 'bilan_envoye',  label: 'Envoyé',          short: 'Envoyé' },
+  { key: 'bilan_general',  label: 'Bilan G. fait',    short: 'Gén.' },
+  { key: 'bilan_vr',       label: 'Bilan VR/FR fait', short: 'VR/FR' },
+  { key: 'docs_analyses',  label: 'Docs analysés',    short: 'Docs' },
+  { key: 'bilan_genere',   label: 'CR généré',        short: 'CR' },
+  { key: 'bilan_envoye',   label: 'Envoyé',           short: 'Envoyé' },
 ];
 
 function renderDashboard() {
@@ -681,11 +734,12 @@ function renderDashboard() {
 
 function getStatutBadgeCls(statut) {
   var map = {
-    bilan_general: 'bg-primary/10 text-primary',
-    bilan_vr: 'bg-primary/20 text-primary',
-    bilan_genere: 'bg-tertiary-container text-on-tertiary-container',
-    bilan_envoye: 'bg-secondary-container text-on-secondary-container',
-    archive: 'bg-surface-container-highest text-on-surface-variant',
+    bilan_general:  'bg-primary/10 text-primary',
+    bilan_vr:       'bg-primary/20 text-primary',
+    docs_analyses:  'bg-tertiary/10 text-tertiary',
+    bilan_genere:   'bg-tertiary-container text-on-tertiary-container',
+    bilan_envoye:   'bg-secondary-container text-on-secondary-container',
+    archive:        'bg-surface-container-highest text-on-surface-variant',
     exporte: 'bg-secondary-container text-on-secondary-container',
     envoye: 'bg-secondary-container text-on-secondary-container',
     en_cours: 'bg-tertiary-container text-on-tertiary-container',
@@ -756,6 +810,9 @@ function creerPatient() {
     seances: new Array(DEFAULT_SEANCES_COUNT).fill(''),
     b1Transcription: '', b1CR: '', b1Valide: false,
     b2Transcription: '', b2CR: '', b2Valide: false,
+    dhiScore: '',
+    docsExternes: '',
+    bilanFinal: '',
     captureVVS: null, captureHCTSIB: null,
     lastMod: new Date().toLocaleString('fr-FR'),
   };
@@ -775,12 +832,14 @@ function ouvrirPatient(id) {
   document.getElementById('bilan-patient-name').textContent = p.prenom + ' ' + p.nom;
   document.getElementById('bilan-lastmod').textContent = 'Modifié : ' + (p.lastMod || '');
   document.getElementById('bilan-status-badge').textContent = getStatutLabel(p.statut);
-  document.getElementById('b1-transcription').value = p.b1Transcription || '';
+  document.getElementById('b1-transcription').value  = p.b1Transcription || '';
+  document.getElementById('b2-transcription').value  = p.b2Transcription || '';
+  document.getElementById('dhi-score').value         = p.dhiScore || '';
+  document.getElementById('docs-externes').value     = p.docsExternes || '';
+  document.getElementById('bilan-final').value       = p.bilanFinal || '';
   if (p.b1CR) {
     document.getElementById('b1-cr').innerHTML = p.b1CR;
     document.getElementById('b1-cr-container').classList.remove('hidden');
-    document.getElementById('b1-badge').textContent = 'Généré';
-    document.getElementById('b1-badge').className = 'px-3 py-1 bg-tertiary-container text-on-tertiary-container text-[11px] font-bold uppercase rounded-full';
   } else {
     document.getElementById('b1-cr-container').classList.add('hidden');
   }
@@ -795,11 +854,28 @@ function saveCurrentPatient() {
   const p = getPatient();
   if (!p) return;
   p.b1Transcription = document.getElementById('b1-transcription').value;
-  p.b1CR = document.getElementById('b1-cr').innerHTML;
+  p.b2Transcription = document.getElementById('b2-transcription').value;
+  p.dhiScore        = document.getElementById('dhi-score').value;
+  p.docsExternes    = document.getElementById('docs-externes').value;
+  p.bilanFinal      = document.getElementById('bilan-final').value;
+  p.b1CR            = document.getElementById('b1-cr').innerHTML;
   p.lastMod = new Date().toLocaleString('fr-FR');
   document.getElementById('bilan-lastmod').textContent = 'Modifié : ' + p.lastMod;
   savePatients();
   showToast('Sauvegardé', 'check');
+}
+
+function supprimerPatient() {
+  var p = getPatient();
+  if (!p) return;
+  if (!confirm('Supprimer définitivement le dossier de ' + p.prenom + ' ' + p.nom + ' ?')) return;
+  if (!confirm('Action irréversible. Confirmer la suppression ?')) return;
+  patients = patients.filter(function(x) { return x.id !== currentPatientId; });
+  currentPatientId = null;
+  savePatients();
+  renderDashboard();
+  showToast('Dossier supprimé', 'delete');
+  showView('dashboard');
 }
 
 function archiverPatient() {
@@ -819,20 +895,26 @@ function archiverPatient() {
 // IA — Génération CR
 // ============================================================
 async function genererCR() {
-  var transcription = document.getElementById('b1-transcription').value.trim();
-  if (!transcription) { showToast('Transcription vide', 'error'); return; }
+  var b1 = document.getElementById('b1-transcription').value.trim();
+  var b2 = document.getElementById('b2-transcription').value.trim();
+  var dhi = document.getElementById('dhi-score').value.trim();
+  var docs = document.getElementById('docs-externes').value.trim();
+  var bf = document.getElementById('bilan-final').value.trim();
+  if (!b1 && !b2 && !docs && !bf) { showToast('Toutes les zones sont vides', 'error'); return; }
   var btn = document.getElementById('btn-gen-b1');
   var originalHTML = btn.innerHTML;
   btn.innerHTML = '<span class="spinner"></span> Génération en cours...';
   btn.disabled = true;
   var p = getPatient();
-  var contextParts = [];
-  if (p) {
-    // Ne pas envoyer le nom réel — l'IA doit utiliser des placeholders anonymes dans le CR
-    if (p.mt) contextParts.push('Médecin traitant (à anonymiser en [Dr. Y] dans le CR) : ' + p.mt + '.');
-    if (p.prescripteur) contextParts.push('Prescripteur (à anonymiser en [Dr. Z] dans le CR) : ' + p.prescripteur + '.');
-  }
-  var contextPatient = contextParts.join(' ');
+  var parts = [];
+  if (p && p.mt) parts.push('Médecin traitant (à anonymiser en [Dr. Y] dans le CR) : ' + p.mt + '.');
+  if (p && p.prescripteur) parts.push('Prescripteur (à anonymiser en [Dr. Z] dans le CR) : ' + p.prescripteur + '.');
+  if (b1)   parts.push('--- BILAN INITIAL (transcription audio) ---\n' + b1);
+  if (b2)   parts.push('--- BILAN VR / FAUTEUIL ROTATOIRE (transcription audio) ---\n' + b2);
+  if (dhi)  parts.push('--- SCORE DHI ---\n' + dhi + '/100');
+  if (docs) parts.push('--- DOCUMENTS EXTERNES (CR hospit, IRM, audiogramme...) ---\n' + docs);
+  if (bf)   parts.push('--- BILAN FINAL / RÉSULTATS DE PRISE EN CHARGE ---\n' + bf);
+  var userMessage = parts.join('\n\n');
   try {
     var response = await fetch('https://kinebilan-worker.sp-mck-kine.workers.dev', {
       method: 'POST',
@@ -841,7 +923,7 @@ async function genererCR() {
         model: 'claude-sonnet-4-20250514',
         max_tokens: 4000,
         system: SYSTEM_PROMPT_B1,
-        messages: [{ role: 'user', content: contextPatient + '\n\nTRANSCRIPTION :\n' + transcription }]
+        messages: [{ role: 'user', content: userMessage }]
       })
     });
     var responseText = await response.text();
@@ -944,11 +1026,12 @@ function updateCapturesCount(p) {
 // ============================================================
 function getStatutLabel(statut) {
   var labels = {
-    bilan_general: 'Bilan général fait',
-    bilan_vr: 'Bilan VR fait',
-    bilan_genere: 'CR généré',
-    bilan_envoye: 'Envoyé',
-    archive: 'Archivé',
+    bilan_general:  'Bilan G. fait',
+    bilan_vr:       'Bilan VR/FR fait',
+    docs_analyses:  'Docs analysés',
+    bilan_genere:   'CR généré',
+    bilan_envoye:   'Envoyé',
+    archive:        'Archivé',
     // legacy
     seance1: 'Séance 1', seance2: 'Séance 2',
     bilan_a_generer: 'Bilan à générer', bilan_a_envoyer: 'Bilan à envoyer',
@@ -1089,6 +1172,7 @@ function exportPDF() {
     + hrow('Prescripteur', prescInfo)
     + hrow('Médecin traitant', p.mt)
     + hrow('Motif', p.motif)
+    + hrow('Score DHI', p.dhiScore ? p.dhiScore + '/100' : '')
     + '</table></div>';
 
   var body = patientBlock
