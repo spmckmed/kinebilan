@@ -190,6 +190,7 @@ tailwind.config = {
     </div>
     <div class="flex items-center gap-2">
       <button onclick="showView('dashboard')" id="nav-dashboard" class="px-4 py-2 rounded-xl text-sm font-medium transition-colors">Dossiers</button>
+      <button onclick="showView('archives')" id="nav-archives" class="px-4 py-2 rounded-xl text-sm font-medium transition-colors">Archives</button>
       <button onclick="showView('nouveau')" id="nav-nouveau" class="hidden px-4 py-2 rounded-xl text-sm font-medium transition-colors">Nouveau bilan</button>
       <button onclick="showView('bilan')" id="nav-bilan" class="hidden px-4 py-2 rounded-xl text-sm font-medium transition-colors">Bilan en cours</button>
       <button onclick="logout()" class="p-2 text-on-surface-variant hover:text-primary transition-colors ml-2" title="Se déconnecter">
@@ -306,30 +307,20 @@ tailwind.config = {
     </div>
   </div>
 
-  <!-- Stepper -->
-  <div class="mb-10">
-    <div class="relative flex items-center justify-between w-full max-w-lg">
-      <div class="absolute top-5 left-0 w-full h-[2px] bg-surface-container-highest z-0"></div>
-      <div id="stepper-bar" class="absolute top-5 left-0 h-[2px] bg-primary z-0 transition-all duration-500" style="width:0%"></div>
-      <div class="step-item relative z-10 flex flex-col items-center gap-1.5" data-step="0">
-        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm ring-4 ring-surface-container-low bg-surface-container-highest text-on-surface-variant"><span class="material-symbols-outlined text-sm">edit_note</span></div>
-        <span class="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">En cours</span>
-      </div>
-      <div class="step-item relative z-10 flex flex-col items-center gap-1.5" data-step="1">
-        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm ring-4 ring-surface-container-low bg-surface-container-highest text-on-surface-variant"><span class="material-symbols-outlined text-sm">photo_camera</span></div>
-        <span class="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Captures</span>
-      </div>
-      <div class="step-item relative z-10 flex flex-col items-center gap-1.5" data-step="2">
-        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm ring-4 ring-surface-container-low bg-surface-container-highest text-on-surface-variant"><span class="material-symbols-outlined text-sm">picture_as_pdf</span></div>
-        <span class="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Export</span>
-      </div>
-      <div class="step-item relative z-10 flex flex-col items-center gap-1.5" data-step="3">
-        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm ring-4 ring-surface-container-low bg-surface-container-highest text-on-surface-variant"><span class="material-symbols-outlined text-sm">inventory_2</span></div>
-        <span class="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Archivé</span>
-      </div>
-    </div>
+  <!-- Onglets Bilan / Suivi séances -->
+  <div class="flex gap-1 mb-8 border-b border-surface-container-highest">
+    <button id="tab-btn-bilan" onclick="showBilanTab('bilan')"
+      class="px-5 py-2.5 text-sm font-semibold border-b-2 border-primary text-primary -mb-px transition-colors">
+      <span class="material-symbols-outlined text-base align-middle mr-1">clinical_notes</span>Bilan
+    </button>
+    <button id="tab-btn-seances" onclick="showBilanTab('seances')"
+      class="px-5 py-2.5 text-sm font-medium border-b-2 border-transparent text-on-surface-variant hover:text-primary -mb-px transition-colors">
+      <span class="material-symbols-outlined text-base align-middle mr-1">event_note</span>Suivi séances
+    </button>
   </div>
 
+  <!-- ===== TAB BILAN ===== -->
+  <div id="tab-content-bilan">
   <!-- Main grid -->
   <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
 
@@ -404,12 +395,6 @@ tailwind.config = {
         </div>
       </div>
 
-      <!-- Suivi prise en charge -->
-      <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm">
-        <h2 class="text-xl font-headline font-semibold mb-4">Suivi</h2>
-        <div id="suivi-statuts" class="flex flex-col gap-2"></div>
-      </div>
-
       <!-- Export -->
       <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm">
         <h2 class="text-xl font-headline font-semibold mb-5">Finalisation</h2>
@@ -422,7 +407,21 @@ tailwind.config = {
       </div>
     </aside>
   </div>
-</div>
+
+  </div><!-- /tab-content-bilan -->
+
+  <!-- ===== TAB SUIVI SÉANCES ===== -->
+  <div id="tab-content-seances" class="hidden">
+    <div class="max-w-3xl space-y-5">
+      <div id="seances-list" class="space-y-4"></div>
+      <button onclick="addSeance()"
+        class="flex items-center gap-2 px-5 py-3 bg-surface-container text-on-surface-variant hover:bg-surface-container-high rounded-xl text-sm font-medium transition-colors">
+        <span class="material-symbols-outlined text-base">add_circle</span> Ajouter une séance
+      </button>
+    </div>
+  </div>
+
+</div><!-- /view-bilan -->
 
 <!-- Toast -->
 <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden">
@@ -577,80 +576,148 @@ function openConfig() {
 // ============================================================
 // NAVIGATION
 // ============================================================
+let dashboardFilter = 'actifs'; // 'actifs' | 'archives'
+
 function showView(v) {
+  // 'archives' utilise la même vue dashboard mais avec un filtre
+  const viewId = (v === 'archives') ? 'dashboard' : v;
   ['dashboard', 'nouveau', 'bilan'].forEach(view => {
     document.getElementById('view-' + view).classList.add('hidden');
-    const nb = document.getElementById('nav-' + view);
+  });
+  ['dashboard', 'archives', 'nouveau', 'bilan'].forEach(navId => {
+    const nb = document.getElementById('nav-' + navId);
     if (nb) {
       nb.classList.remove('bg-surface-container', 'text-primary', 'font-semibold');
       nb.classList.add('text-on-surface-variant');
     }
   });
-  document.getElementById('view-' + v).classList.remove('hidden');
+  document.getElementById('view-' + viewId).classList.remove('hidden');
   const nb = document.getElementById('nav-' + v);
   if (nb) {
     nb.classList.remove('hidden', 'text-on-surface-variant');
     nb.classList.add('bg-surface-container', 'text-primary', 'font-semibold');
   }
-  // show bilan nav only when a patient is loaded
   if (v === 'bilan') {
     document.getElementById('nav-bilan').classList.remove('hidden');
   }
+  if (v === 'archives') {
+    dashboardFilter = 'archives';
+    document.getElementById('view-dashboard').querySelector('h1').textContent = 'Archives';
+  } else if (v === 'dashboard') {
+    dashboardFilter = 'actifs';
+    document.getElementById('view-dashboard').querySelector('h1').textContent = 'Patients';
+  }
+  if (v === 'dashboard' || v === 'archives') renderDashboard();
 }
 
 // ============================================================
 // DASHBOARD
 // ============================================================
+const PIPELINE_STATUTS = [
+  { key: 'bilan_general', label: 'Bilan général', short: 'Gén.' },
+  { key: 'bilan_vr',      label: 'Bilan VR fait',  short: 'VR' },
+  { key: 'bilan_genere',  label: 'CR généré',       short: 'CR' },
+  { key: 'bilan_envoye',  label: 'Envoyé',          short: 'Envoyé' },
+];
+
 function renderDashboard() {
   const list = document.getElementById('patientList');
-  const stats = {
-    total: patients.length,
-    encours: patients.filter(p => !['archive', 'envoye', 'exporte', 'bilan_envoye'].includes(p.statut)).length,
-    exportes: patients.filter(p => ['exporte', 'envoye', 'bilan_envoye'].includes(p.statut)).length,
-    archives: patients.filter(p => p.statut === 'archive').length,
-  };
-  document.getElementById('stat-total').textContent = stats.total;
-  document.getElementById('stat-encours').textContent = stats.encours;
-  document.getElementById('stat-exportes').textContent = stats.exportes;
-  document.getElementById('stat-archives').textContent = stats.archives;
+  const actifs = patients.filter(p => p.statut !== 'archive');
+  const archives = patients.filter(p => p.statut === 'archive');
+  document.getElementById('stat-total').textContent = patients.length;
+  document.getElementById('stat-encours').textContent = actifs.length;
+  document.getElementById('stat-exportes').textContent = patients.filter(p => p.statut === 'bilan_envoye').length;
+  document.getElementById('stat-archives').textContent = archives.length;
 
-  if (!patients.length) {
-    list.innerHTML = `<div class="text-center py-16 text-on-surface-variant">
-      <span class="material-symbols-outlined text-5xl mb-3 block opacity-30">folder_open</span>
-      <p class="text-sm">Aucun dossier patient. Créez votre premier bilan.</p>
-    </div>`;
+  const shown = dashboardFilter === 'archives' ? archives : actifs;
+
+  if (!shown.length) {
+    list.innerHTML = '<div class="text-center py-16 text-on-surface-variant">'
+      + '<span class="material-symbols-outlined text-5xl mb-3 block opacity-30">folder_open</span>'
+      + '<p class="text-sm">' + (dashboardFilter === 'archives' ? 'Aucun dossier archivé.' : 'Aucun dossier actif. Créez votre premier bilan.') + '</p>'
+      + '</div>';
     return;
   }
 
-  const statusLabels = {
-    seance1: { label: 'Séance 1', cls: 'bg-primary/10 text-primary' },
-    seance2: { label: 'Séance 2', cls: 'bg-primary/20 text-primary' },
-    bilan_a_generer: { label: 'Bilan à générer', cls: 'bg-tertiary-container text-on-tertiary-container' },
-    bilan_a_envoyer: { label: 'Bilan à envoyer', cls: 'bg-secondary/10 text-secondary' },
-    bilan_envoye: { label: 'Bilan envoyé', cls: 'bg-secondary-container text-on-secondary-container' },
-    bilan1: { label: 'En cours', cls: 'bg-tertiary-container text-on-tertiary-container' },
-    bilan2: { label: 'En cours', cls: 'bg-tertiary-container text-on-tertiary-container' },
-    en_cours: { label: 'En cours', cls: 'bg-tertiary-container text-on-tertiary-container' },
-    captures: { label: 'Captures', cls: 'bg-primary/10 text-primary' },
-    exporte: { label: 'Exporté', cls: 'bg-secondary-container text-on-secondary-container' },
-    envoye: { label: 'Envoyé', cls: 'bg-secondary-container text-on-secondary-container' },
-    archive: { label: 'Archivé', cls: 'bg-surface-container-highest text-on-surface-variant' },
-  };
+  list.innerHTML = shown.slice().reverse().map(function(p) {
+    var chips = dashboardFilter === 'archives' ? '' : PIPELINE_STATUTS.map(function(s) {
+      var isActive = p.statut === s.key;
+      var cls = isActive
+        ? 'px-2.5 py-1 text-[10px] font-bold rounded-full bg-primary text-white cursor-pointer transition-all'
+        : 'px-2.5 py-1 text-[10px] font-medium rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high cursor-pointer transition-all';
+      return '<button class="' + cls + '" onclick="setStatutCard(event,\'' + p.id + '\',\'' + s.key + '\')">' + s.label + '</button>';
+    }).join('');
 
-  list.innerHTML = patients.slice().reverse().map(p => {
-    const sl = statusLabels[p.statut] || statusLabels['bilan1'];
-    return `<div onclick="ouvrirPatient('${p.id}')" class="bg-surface-container-lowest p-5 rounded-xl shadow-sm hover:shadow-md cursor-pointer transition-all flex items-center justify-between group">
-      <div>
-        <div class="flex items-center gap-3 mb-1">
-          <span class="px-2.5 py-0.5 text-[10px] font-bold uppercase rounded-full ${sl.cls}">${sl.label}</span>
-          <span class="text-xs text-on-surface-variant">${p.dateEval || ''}</span>
-        </div>
-        <h3 class="text-lg font-headline font-semibold group-hover:text-primary transition-colors">${p.prenom} ${p.nom}</h3>
-        <p class="text-xs text-on-surface-variant">${p.age ? p.age + ' ans' : ''} ${p.motif ? '— ' + p.motif : ''}</p>
-      </div>
-      <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">chevron_right</span>
-    </div>`;
+    var archiveBtn = dashboardFilter === 'archives'
+      ? '<button onclick="desarchiverCard(event,\'' + p.id + '\')" class="text-xs text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1 ml-2"><span class="material-symbols-outlined text-sm">unarchive</span></button>'
+      : '<button onclick="archiverCard(event,\'' + p.id + '\')" class="text-xs text-error hover:text-error/80 transition-colors flex items-center gap-1 ml-2" title="Archiver"><span class="material-symbols-outlined text-sm">archive</span></button>';
+
+    var badgeCls = getStatutBadgeCls(p.statut);
+    return '<div class="bg-surface-container-lowest p-5 rounded-xl shadow-sm hover:shadow-md transition-all">'
+      + '<div class="flex items-start justify-between gap-3">'
+      + '<div class="cursor-pointer flex-1 min-w-0" onclick="ouvrirPatient(\'' + p.id + '\')">'
+      + '<div class="flex items-center gap-2 mb-1">'
+      + '<span class="px-2.5 py-0.5 text-[10px] font-bold uppercase rounded-full ' + badgeCls + '">' + getStatutLabel(p.statut) + '</span>'
+      + '<span class="text-xs text-on-surface-variant">' + (p.dateEval || '') + '</span>'
+      + '</div>'
+      + '<h3 class="text-lg font-headline font-semibold hover:text-primary transition-colors">' + p.prenom + ' ' + p.nom + '</h3>'
+      + '<p class="text-xs text-on-surface-variant">' + (p.age ? p.age + ' ans' : '') + (p.motif ? ' — ' + p.motif : '') + '</p>'
+      + '</div>'
+      + '<div class="flex items-center gap-1 shrink-0">' + archiveBtn
+      + '<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary" onclick="ouvrirPatient(\'' + p.id + '\')">chevron_right</span>'
+      + '</div>'
+      + '</div>'
+      + (chips ? '<div class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-surface-container-highest">' + chips + '</div>' : '')
+      + '</div>';
   }).join('');
+}
+
+function getStatutBadgeCls(statut) {
+  var map = {
+    bilan_general: 'bg-primary/10 text-primary',
+    bilan_vr: 'bg-primary/20 text-primary',
+    bilan_genere: 'bg-tertiary-container text-on-tertiary-container',
+    bilan_envoye: 'bg-secondary-container text-on-secondary-container',
+    archive: 'bg-surface-container-highest text-on-surface-variant',
+    exporte: 'bg-secondary-container text-on-secondary-container',
+    envoye: 'bg-secondary-container text-on-secondary-container',
+    en_cours: 'bg-tertiary-container text-on-tertiary-container',
+    bilan1: 'bg-tertiary-container text-on-tertiary-container',
+  };
+  return map[statut] || 'bg-surface-container text-on-surface-variant';
+}
+
+function setStatutCard(event, id, statut) {
+  event.stopPropagation();
+  var p = patients.find(function(x) { return x.id === id; });
+  if (!p) return;
+  p.statut = statut;
+  p.lastMod = new Date().toLocaleString('fr-FR');
+  savePatients();
+  renderDashboard();
+  showToast(getStatutLabel(statut), 'check_circle');
+}
+
+function archiverCard(event, id) {
+  event.stopPropagation();
+  var p = patients.find(function(x) { return x.id === id; });
+  if (!p) return;
+  p.statut = 'archive';
+  p.lastMod = new Date().toLocaleString('fr-FR');
+  savePatients();
+  renderDashboard();
+  showToast('Dossier archivé', 'inventory_2');
+}
+
+function desarchiverCard(event, id) {
+  event.stopPropagation();
+  var p = patients.find(function(x) { return x.id === id; });
+  if (!p) return;
+  p.statut = 'bilan_general';
+  p.lastMod = new Date().toLocaleString('fr-FR');
+  savePatients();
+  renderDashboard();
+  showToast('Dossier restauré', 'unarchive');
 }
 
 // ============================================================
@@ -678,7 +745,8 @@ function creerPatient() {
     profession: '', loisirs: '',
     prescripteur: prescripteur, datePrescription: '',
     mt: mt, motif: '',
-    statut: 'seance1',
+    statut: 'bilan_general',
+    seances: new Array(DEFAULT_SEANCES_COUNT).fill(''),
     b1Transcription: '', b1CR: '', b1Valide: false,
     b2Transcription: '', b2CR: '', b2Valide: false,
     captureVVS: null, captureHCTSIB: null,
@@ -713,8 +781,7 @@ function ouvrirPatient(id) {
   renderCapture('hctsib', p.captureHCTSIB);
   updateCapturesCount(p);
   updateExportButton(p);
-  updateStepper(p);
-  renderSuiviStatuts(p);
+  showBilanTab('bilan'); // toujours ouvrir sur l'onglet Bilan
   showView('bilan');
 }
 function saveCurrentPatient() {
@@ -731,9 +798,11 @@ function saveCurrentPatient() {
 function archiverPatient() {
   const p = getPatient();
   if (!p) return;
+  if (!confirm('Archiver ce dossier ?')) return;
   p.statut = 'archive';
   p.lastMod = new Date().toLocaleString('fr-FR');
   savePatients();
+  dashboardFilter = 'actifs';
   renderDashboard();
   showToast('Dossier archivé', 'inventory_2');
   showView('dashboard');
@@ -828,7 +897,6 @@ function handleCapture(type, input) {
     renderCapture(type, e.target.result);
     updateCapturesCount(p);
     updateChecklist(p);
-    updateStepper(p);
     showToast(`Capture ${type.toUpperCase()} ajoutée`, 'photo_camera');
   };
   reader.readAsDataURL(file);
@@ -865,56 +933,92 @@ function updateCapturesCount(p) {
 }
 
 // ============================================================
-// SUIVI PRISE EN CHARGE
+// STATUTS
 // ============================================================
-var SUIVI_STATUTS = [
-  { key: 'seance1', label: 'Séance 1', icon: 'self_improvement' },
-  { key: 'seance2', label: 'Séance 2', icon: 'self_improvement' },
-  { key: 'bilan_a_generer', label: 'Bilan à générer', icon: 'edit_document' },
-  { key: 'bilan_a_envoyer', label: 'Bilan à envoyer', icon: 'send' },
-  { key: 'bilan_envoye', label: 'Bilan envoyé', icon: 'check_circle' },
-];
-
 function getStatutLabel(statut) {
   var labels = {
+    bilan_general: 'Bilan général fait',
+    bilan_vr: 'Bilan VR fait',
+    bilan_genere: 'CR généré',
+    bilan_envoye: 'Envoyé',
+    archive: 'Archivé',
+    // legacy
     seance1: 'Séance 1', seance2: 'Séance 2',
     bilan_a_generer: 'Bilan à générer', bilan_a_envoyer: 'Bilan à envoyer',
-    bilan_envoye: 'Bilan envoyé',
     en_cours: 'En cours', bilan1: 'En cours', bilan2: 'En cours',
-    captures: 'Captures', exporte: 'Exporté', envoye: 'Envoyé', archive: 'Archivé'
+    captures: 'Captures', exporte: 'Exporté', envoye: 'Envoyé'
   };
   return labels[statut] || statut;
 }
 
-function renderSuiviStatuts(p) {
-  var container = document.getElementById('suivi-statuts');
-  if (!container) return;
-  container.innerHTML = SUIVI_STATUTS.map(function(s) {
-    var isActive = p.statut === s.key;
-    var baseCls = 'flex items-center gap-3 w-full px-4 py-2.5 rounded-xl font-medium text-sm cursor-pointer transition-all text-left';
-    var cls = isActive
-      ? baseCls + ' bg-primary text-white shadow-sm'
-      : baseCls + ' bg-surface-container text-on-surface-variant hover:bg-surface-container-high';
-    var checkMark = isActive ? '<span class="material-symbols-outlined text-sm ml-auto" style="font-variation-settings:\'FILL\' 1">check_circle</span>' : '';
-    return '<button class="' + cls + '" onclick="setStatut(\'' + s.key + '\')">'
-      + '<span class="material-symbols-outlined text-base">' + s.icon + '</span>'
-      + '<span>' + s.label + '</span>'
-      + checkMark
-      + '</button>';
+// ============================================================
+// SUIVI SÉANCES
+// ============================================================
+var DEFAULT_SEANCES_COUNT = 10;
+
+function renderSuiviSeances(p) {
+  var list = document.getElementById('seances-list');
+  if (!list) return;
+  if (!p.seances) p.seances = [];
+  // S'assurer qu'il y a au moins DEFAULT_SEANCES_COUNT séances
+  while (p.seances.length < DEFAULT_SEANCES_COUNT) p.seances.push('');
+  list.innerHTML = p.seances.map(function(text, i) {
+    return '<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">'
+      + '<label class="block text-xs font-bold uppercase tracking-wider text-primary mb-2">Séance ' + (i + 1) + '</label>'
+      + '<textarea data-seance="' + i + '" rows="3" '
+      + 'class="w-full p-3 bg-surface-container text-sm rounded-xl border-none focus:ring-2 focus:ring-primary/20 outline-none resize-none" '
+      + 'placeholder="Notes libres sur la séance ' + (i + 1) + '..." '
+      + 'onblur="saveSeance(' + i + ', this.value)">'
+      + escHtml(text)
+      + '</textarea>'
+      + '</div>';
   }).join('');
 }
 
-function setStatut(statut) {
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function saveSeance(index, value) {
   var p = getPatient();
   if (!p) return;
-  p.statut = statut;
+  if (!p.seances) p.seances = [];
+  while (p.seances.length <= index) p.seances.push('');
+  p.seances[index] = value;
   p.lastMod = new Date().toLocaleString('fr-FR');
   savePatients();
-  renderSuiviStatuts(p);
-  renderDashboard();
-  document.getElementById('bilan-status-badge').textContent = getStatutLabel(statut);
-  document.getElementById('bilan-lastmod').textContent = 'Modifié : ' + p.lastMod;
-  showToast('Statut : ' + getStatutLabel(statut), 'check_circle');
+}
+
+function addSeance() {
+  var p = getPatient();
+  if (!p) return;
+  if (!p.seances) p.seances = [];
+  p.seances.push('');
+  savePatients();
+  renderSuiviSeances(p);
+  // Scroller vers la nouvelle séance
+  var list = document.getElementById('seances-list');
+  if (list) list.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  showToast('Séance ' + p.seances.length + ' ajoutée', 'add_circle');
+}
+
+// ============================================================
+// ONGLETS BILAN
+// ============================================================
+function showBilanTab(tab) {
+  document.getElementById('tab-content-bilan').classList.toggle('hidden', tab !== 'bilan');
+  document.getElementById('tab-content-seances').classList.toggle('hidden', tab !== 'seances');
+  var btnBilan = document.getElementById('tab-btn-bilan');
+  var btnSeances = document.getElementById('tab-btn-seances');
+  if (tab === 'bilan') {
+    btnBilan.className = 'px-5 py-2.5 text-sm font-semibold border-b-2 border-primary text-primary -mb-px transition-colors';
+    btnSeances.className = 'px-5 py-2.5 text-sm font-medium border-b-2 border-transparent text-on-surface-variant hover:text-primary -mb-px transition-colors';
+  } else {
+    btnSeances.className = 'px-5 py-2.5 text-sm font-semibold border-b-2 border-primary text-primary -mb-px transition-colors';
+    btnBilan.className = 'px-5 py-2.5 text-sm font-medium border-b-2 border-transparent text-on-surface-variant hover:text-primary -mb-px transition-colors';
+    var p = getPatient();
+    if (p) renderSuiviSeances(p);
+  }
 }
 
 // ============================================================
@@ -936,28 +1040,6 @@ function updateExportButton(p) {
   }
 }
 function updateChecklist(p) { updateExportButton(p); }
-function updateStepper(p) {
-  var steps = document.querySelectorAll('.step-item');
-  var stepMap = {
-    seance1: 0, seance2: 0, bilan_a_generer: 0,
-    bilan1: 0, en_cours: 0,
-    bilan_a_envoyer: 1, bilan2: 1, captures: 1,
-    exporte: 2, bilan_envoye: 2,
-    envoye: 3, archive: 3
-  };
-  var currentStep = stepMap[p.statut] !== undefined ? stepMap[p.statut] : 0;
-  var pct = [0, 33, 66, 100][currentStep] || 0;
-  document.getElementById('stepper-bar').style.width = pct + '%';
-  steps.forEach(function(s, i) {
-    var dot = s.querySelector('div');
-    var cls = dot.className;
-    if (i < currentStep) {
-      dot.className = cls.replace('bg-surface-container-highest text-on-surface-variant', 'bg-primary text-white');
-    } else if (i === currentStep) {
-      dot.className = cls.replace('bg-surface-container-highest text-on-surface-variant', 'bg-primary/20 text-primary');
-    }
-  });
-}
 
 // ============================================================
 // EXPORT PDF
@@ -1022,7 +1104,6 @@ function exportPDF() {
   p.lastMod = new Date().toLocaleString('fr-FR');
   savePatients();
   renderDashboard();
-  updateStepper(p);
   showToast('PDF genere', 'picture_as_pdf');
 }
 // ============================================================
@@ -1242,7 +1323,6 @@ function exportWord() {
       p.lastMod = new Date().toLocaleString('fr-FR');
       savePatients();
       renderDashboard();
-      updateStepper(p);
       showToast('Document Word généré', 'description');
     });
 
